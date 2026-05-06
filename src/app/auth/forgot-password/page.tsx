@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
 
           <p className="text-center text-xs md:text-sm text-black">
             Ingat password Anda? 
-            <Link href="/login" className="hover:text-blue-500 hover:underline text-black ml-1">
+            <Link href="/auth/login" className="hover:text-blue-500 hover:underline text-black ml-1">
               Login
             </Link>
           </p>

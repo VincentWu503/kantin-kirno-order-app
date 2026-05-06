@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,7 +43,6 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col">
       <div className="bg-blue-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
         <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2">
-          <span className="text-xs md:text-sm lg:text-base font-bold text-black">SAHERA PAK KIRNO</span>
         </div>
       </div>
 
@@ -71,10 +70,10 @@ export default function LoginPage() {
           </div>
           
           <div className="flex flex-col gap-1">
-            <Link href="/forgot-password" className= "py-2 hover:text-blue-600 text-xs hover:underline md:text-sm text-black font-medium text-left transition">
+            <Link href="/auth/forgot-password" className= "py-2 hover:text-blue-600 text-xs hover:underline md:text-sm text-black font-medium text-left transition">
               Lupa Password
             </Link>
-            <Link href="/register" className=" py-2 hover:text-blue-600 text-xs hover:underline md:text-sm text-black font-medium text-left transition">
+            <Link href="/auth/register" className=" py-2 hover:text-blue-600 text-xs hover:underline md:text-sm text-black font-medium text-left transition">
               Registrasi
             </Link>
           </div>

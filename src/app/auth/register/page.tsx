@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -44,7 +44,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         alert("Registrasi berhasil! Silakan login.");
-        router.push("/login");
+        router.push("/auth/login");
       } else {
         alert(data.message || "Registrasi Gagal");
       }
@@ -133,7 +133,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-xs md:text-sm text-black">
             Sudah punya akun? 
-            <Link href="/login" className="hover:text-blue-500 hover:underline text-black ml-1">
+            <Link href="/auth/login" className="hover:text-blue-500 hover:underline text-black ml-1">
               Login
             </Link>
           </p>
