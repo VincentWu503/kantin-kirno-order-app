@@ -4,8 +4,8 @@ import { Montserrat } from "next/font/google";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-const CartPage = () => {
-    const cartItems = [
+const takeawayPage = () => {
+    const takeAwayItems = [
         {
             id: 1,
             nama: "Nasi Goreng",
@@ -27,7 +27,7 @@ const CartPage = () => {
         <div className="min-h-screen bg-white p-6 pb-20 font-serif text-black">
             {/* Tombol back */}
             <div className="mb-4">
-                <Link href="/" className="inline-block">
+                <Link href="/cart" className="inline-block">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
@@ -35,10 +35,10 @@ const CartPage = () => {
             </div>
 
         {/* isi halaman */}
-        <h1 className="text-5xl md:text-4xl font-bold mb-8 tracking-tight">Delivery</h1>
+        <h1 className="text-5xl md:text-4xl font-bold mb-8 tracking-tight">Take Away</h1>
 
         <div className="space-y-4 mb-10">
-            {cartItems.map((item) => (
+            {takeAwayItems.map((item) => (
                 <div key={item.id} className="bg-gray-200 rounded-lg p-4 shadow-md justify-between flex items-center">  
                     <span className="text-2xl font-medium">{item.nama}</span>
                     <div className="flex items-center gap-3">
@@ -74,33 +74,23 @@ const CartPage = () => {
                 <span className="font-mono w-12 text-left">Rp.</span>
                 <span className="font-mono w-32 text-right">5.000</span>
             </div>
-            <div className="flex items-center">
-                <span className="flex-1">Ongkir</span>
-                <span className="font-mono w-12 text-left">Rp.</span>
-                <span className="font-mono w-32 text-right">5.000</span>
-            </div>
         </div>
 
         <div className="flex items-center font-bold text-3xl mb-10 py-2">
             <span className="flex-1">Total</span>
             <span className="font-mono w-12 text-left">Rp.</span>
-            <span className="font-mono w-32 text-right">40.000</span>
+            <span className="font-mono w-32 text-right">35.000</span>
         </div>
 
         {/* tombol checkout */}
-        <div className="flex justify-center flex-row gap-4">
-            <Link href="/cart/takeaway" className="flex-1">
+        <div className="flex justify-center">
+            <Link href="/cart/takeaway" className="w-1/4">
                 <button className={`${montserrat.className} w-full bg-red-500 text-white py-7 rounded-2xl text-5xl font-bold hover:bg-blue-700 transition`}>
-                    Take Away
-                </button>
-            </Link>
-            <Link href="/cart/delivery" className="flex-1">
-                <button className={`${montserrat.className} w-full bg-red-500 text-white py-7 rounded-2xl text-5xl font-bold hover:bg-blue-700 transition`}>
-                    Delivery UNTAR 1
+                    Check Out
                 </button>
             </Link>
         </div>
     </div>);
 }
 
-export default CartPage;
+export default takeawayPage;
