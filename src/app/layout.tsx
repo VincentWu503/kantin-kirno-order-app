@@ -6,7 +6,10 @@ import Navbar from "@/components/navbar";
 import LoadingScreen from "@/components/loading";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
+
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -39,7 +42,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased bg-gray-50 m-0 p-0">
+      <body className={`${montserrat.className} antialiased bg-gray-50 m-0 p-0`}>
         <AuthProvider>
           <LayoutContent>{children}</LayoutContent>
         </AuthProvider>
