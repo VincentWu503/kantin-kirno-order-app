@@ -26,12 +26,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const isUserAuthorized = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch("http://localhost:5000/api/auth/user/me", {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
+      }
+
+      if (response.status === 401) {
+        setIsLoggedIn(false);
+        localStorage.removeItem('token');
+      } else if (response.status === 200) {
+        setIsLoggedIn(true);
+      }
+    } catch (err) {
+      console.error("Detail Error:", err);
+      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    isUserAuthorized();
   }, []);
 
   const login = (token: string) => {

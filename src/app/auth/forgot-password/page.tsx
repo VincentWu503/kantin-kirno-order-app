@@ -11,7 +11,7 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1); // 1 = enter email, 2 = reset password
   const router = useRouter();
 
-  const handleSendReset = async (e: React.FormEvent) => {
+  const handleSendReset = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setLoading(true);
 

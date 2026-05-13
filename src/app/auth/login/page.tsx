@@ -10,34 +10,34 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SubmitEvent) => {
   e.preventDefault();
   
     try {
-        const response = await fetch("http://localhost:5000/api/user/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        const response = await fetch("http://localhost:5000/api/auth/user/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
 
-    // Cek apakah respons berupa JSON sebelum di-parse
+        // Cek apakah respons berupa JSON sebelum di-parse
         const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
+          if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
         }
 
         const data = await response.json();
 
         if (response.ok) {
-        login(data.token);
-        router.push("/"); 
+          login(data.token);
+          router.push("/"); 
         } else {
-        alert(data.message || "Login Gagal");
+          alert(data.message || "Login Gagal");
         }
-    } catch (err) {
-        console.error("Detail Error:", err);
-        alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
-    }
+      } catch (err) {
+          console.error("Detail Error:", err);
+          alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      }
     };
   return (
     <div className="min-h-screen flex flex-col">
