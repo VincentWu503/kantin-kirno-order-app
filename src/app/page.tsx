@@ -2,12 +2,71 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { useState, useEffect } from "react";
+import { ENV } from '@/config/env';
+
+const fetchUser = async (accessToken: string) => {
+  try {
+    const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
+      method: "GET",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
+       },
+    });
+
+    // Cek apakah respons berupa JSON sebelum di-parse
+    const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
+    }
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return data;
+    } else {
+      // alert(`${data.code}: ${data.description}`);
+      // ini kita gak usah alert, ntar bikin bingung user aja
+      return;
+    }
+  } catch (err) {
+      console.error("Detail Error:", err);
+      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+  }
+}
 
 export default function HomePage() {
-  const { isLoggedIn } = useAuth();
-
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
+
+  const [accessToken, setAccessToken] = useState("");
+  const { isLoggedIn } = useAuth();
+  const [ profile, setProfile ] = useState({
+    name: "User",
+    profileUrl: loggedInImage,
+  })
+
+  useEffect(() => {
+    setAccessToken(localStorage.getItem('token') || "");
+  }, []);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (isLoggedIn && accessToken) {
+        const data = await fetchUser(accessToken);
+        
+        if (data) {
+          setProfile({
+            name: data.username || profile.name,
+            profileUrl: data.profile_image_url || profile.profileUrl 
+          });
+        }
+      }
+    };
+
+    loadProfile();
+  }, [isLoggedIn, accessToken]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -17,7 +76,7 @@ export default function HomePage() {
           {/* Profile Image Logic */}
           <div className="relative w-10 h-10 md:w-14 md:h-14 overflow-hidden rounded-full border-2 border-gray-100 shadow-sm">
             <Image 
-              src={isLoggedIn ? loggedInImage : guestImage} 
+              src={isLoggedIn ? profile.profileUrl : guestImage} 
               alt="Profile" 
               fill
               className="object-cover"
@@ -25,7 +84,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-sm md:text-xl font-serif font-bold text-black leading-tight">
-              {isLoggedIn ? "Halo, User" : "Sahera Pak Kirno"}
+              {isLoggedIn ? `Halo, ${profile.name}` : "Sahera Pak Kirno"}
             </h1>
             {isLoggedIn && <span className="text-[10px] md:text-xs text-gray-500">Selamat Makan!</span>}
           </div>
