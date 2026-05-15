@@ -40,16 +40,12 @@ export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
 
-  const [accessToken, setAccessToken] = useState("");
+  const [accessToken] = useState(() => localStorage.getItem('token') || "");
   const { isLoggedIn } = useAuth();
   const [ profile, setProfile ] = useState({
     name: "User",
     profileUrl: loggedInImage,
   })
-
-  useEffect(() => {
-    setAccessToken(localStorage.getItem('token') || "");
-  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
