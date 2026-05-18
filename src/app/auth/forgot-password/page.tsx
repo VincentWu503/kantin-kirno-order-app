@@ -14,6 +14,7 @@ export default function ForgotPasswordPage() {
   const handleSendReset = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setLoading(true);
+    const [, setError] = useState<Error | null>(null);
 
     try {
       const response = await fetch("http://localhost:5000/api/user/forgot-password", {
@@ -32,12 +33,12 @@ export default function ForgotPasswordPage() {
       if (response.ok) {
         alert("Link reset password telah dikirim ke email Anda");
         setStep(2);
-      } else {
-        alert(data.message || "Email tidak ditemukan");
-      }
+      } 
     } catch (err) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err;
+      });
     } finally {
       setLoading(false);
     }

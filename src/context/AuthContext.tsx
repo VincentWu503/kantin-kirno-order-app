@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [, setError] = useState<Error | null>(null);
 
   const isUserAuthorized = async () => {
     try {
@@ -50,7 +51,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (err) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err;
+      })
     }
   }
 
