@@ -2,22 +2,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ENV } from '@/config/env';
+import { fetchMenu } from "@/utils/fetchUtils";
+import { MenuData, MenuResponseData } from "@/utils/types";
 
 const fetchUser = async (accessToken: string) => {
   try {
     const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
       method: "GET",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`
-       },
+      },
     });
 
     // Cek apakah respons berupa JSON sebelum di-parse
     const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
+    if (!contentType || !contentType.includes("application/json")) {
       throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
     }
 
@@ -31,9 +33,23 @@ const fetchUser = async (accessToken: string) => {
       return;
     }
   } catch (err) {
-      console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+    console.error("Detail Error:", err);
+    alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
   }
+}
+
+function MenuCard({ menu }: { menu: MenuData }) {
+  return <div className="flex flex-col gap-2 md:gap-3">
+    <div className="bg-gray-200 p-3 md:p-4 rounded-2xl md:rounded-3xl">
+      <div className="w-full aspect-square bg-red-600 rounded-xl md:rounded-2xl mb-2 md:mb-3"></div>{/* Fix this after dealing with cloudinary */}
+      <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
+      <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
+    </div>
+    <button className="w-full py-2 md:py-2.5 lg:py-3 bg-gray-200 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium hover:bg-gray-300 transition active:scale-95 text-black" disabled={!menu.is_available}>
+      Add to Cart
+    </button>
+    { /* Maybe add a special message if item cant be bought*/}
+  </div>
 }
 
 export default function HomePage() {
@@ -42,20 +58,26 @@ export default function HomePage() {
 
   const [accessToken] = useState(() => localStorage.getItem('token') || "");
   const { isLoggedIn } = useAuth();
-  const [ profile, setProfile ] = useState({
+  const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
   })
+
+  const [offset, setOffset] = useState(0) //magic number, should use offset default constant if exists
+  const [limit, setLimit] = useState(24) //magic number, should use limit default constant if exists
+  const [search, setSearch] = useState<string>(() => "") //magic number, should use limit default constant if exists
+  const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
+  const [menuLoading, setMenuLoading] = useState(true);
 
   useEffect(() => {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
         const data = await fetchUser(accessToken);
-        
+
         if (data) {
           setProfile({
             name: data.username || profile.name,
-            profileUrl: data.profile_image_url || profile.profileUrl 
+            profileUrl: data.profile_image_url || profile.profileUrl
           });
         }
       }
@@ -64,6 +86,16 @@ export default function HomePage() {
     loadProfile();
   }, [isLoggedIn, accessToken]);
 
+  useEffect(() => {
+    const menuData = async () => {
+      setMenuLoading(true);
+      const menus = await fetchMenu(offset, limit, search || undefined);
+      setMenu(menus as MenuResponseData);
+      setMenuLoading(false);
+    }
+    menuData();
+  }, [offset, limit, search])
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -71,9 +103,9 @@ export default function HomePage() {
         <div className="flex items-center gap-3 md:gap-4">
           {/* Profile Image Logic */}
           <div className="relative w-10 h-10 md:w-14 md:h-14 overflow-hidden rounded-full border-2 border-gray-100 shadow-sm">
-            <Image 
-              src={isLoggedIn ? profile.profileUrl : guestImage} 
-              alt="Profile" 
+            <Image
+              src={isLoggedIn ? profile.profileUrl : guestImage}
+              alt="Profile"
               fill
               className="object-cover"
             />
@@ -90,8 +122,8 @@ export default function HomePage() {
           {isLoggedIn ? (
             <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
-                <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
               </svg>
             </Link>
           ) : (
@@ -105,30 +137,23 @@ export default function HomePage() {
       {/* Search Bar */}
       <div className="px-4 py-3 md:px-6 md:py-4">
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Cari makanan..." 
-            className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400" 
+          <input
+            type="text"
+            placeholder="Cari makanan..."
+            className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400"
+            onChange={(e) => setSearch(e.target.value)}
           />
           <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl">🔍</span>
         </div>
       </div>
 
       {/* Menu Grid */}
-      <main className="px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-        {[1, 2, 3, 4].map((item) => (
-          <div key={item} className="flex flex-col gap-2 md:gap-3">
-            <div className="bg-gray-200 p-3 md:p-4 rounded-2xl md:rounded-3xl">
-              <div className="w-full aspect-square bg-red-600 rounded-xl md:rounded-2xl mb-2 md:mb-3"></div>
-              <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">Nama Makanan</p>
-              <p className="text-xs md:text-sm text-black">Rp 20.000</p>
-            </div>
-            <button className="w-full py-2 md:py-2.5 lg:py-3 bg-gray-200 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium hover:bg-gray-300 transition active:scale-95 text-black">
-              add to cart
-            </button>
-          </div>
-        ))}
-      </main>
+      {menuLoading ?
+        (<div>Loading...</div>) :
+        (<main className="px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+          {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} />)}
+        </main>)
+      }
     </div>
   );
 }
