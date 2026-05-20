@@ -8,12 +8,12 @@ import GoogleSignIn from "@/components/GoogleSignIn";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [, setError] = useState<Error | null>(null);
   const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    const [, setError] = useState<Error | null>(null);
   
     try {
         const response = await fetch("http://localhost:5000/api/auth/user/login", {
