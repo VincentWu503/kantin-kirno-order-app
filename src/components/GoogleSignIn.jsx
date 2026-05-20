@@ -7,6 +7,7 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 export default function GoogleSignIn() {
     const { login } = useAuth();
     const router = useRouter();
+    const [, setError] = useState<Error | null>(null);
 
     const handleCredentialResponse = async (response) => {
         fetch("http://localhost:5000/api/auth/user/google", {
@@ -36,7 +37,9 @@ export default function GoogleSignIn() {
              })
             .catch(err => {
                 console.error("Detail Error:", err);
-                alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+                setError(() => {
+                    throw err;
+                })
             });
     }
 

@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [, setError] = useState<Error | null>(null);
   const router = useRouter();
 
   const handleRegister = async (e: React.SubmitEvent) => {
@@ -51,7 +52,9 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err;
+      })
     } finally {
       setLoading(false);
     }

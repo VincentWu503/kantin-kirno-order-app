@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { ENV } from '@/config/env';
 
 const fetchUser = async (accessToken: string) => {
+  const [, setError] = useState<Error | null>(null);
   try {
     const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
       method: "GET",
@@ -32,7 +33,9 @@ const fetchUser = async (accessToken: string) => {
     }
   } catch (err) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err;
+      })
   }
 }
 

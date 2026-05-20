@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
+    const [, setError] = useState<Error | null>(null);
   
     try {
         const response = await fetch("http://localhost:5000/api/auth/user/login", {
@@ -32,12 +33,12 @@ export default function LoginPage() {
         if (response.ok) {
           login(data.token);
           router.push("/"); 
-        } else {
-          alert(data.message || "Login Gagal");
-        }
+        } 
       } catch (err) {
           console.error("Detail Error:", err);
-          alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+          setError(() => {
+            throw err;
+          })
       }
     };
   return (
