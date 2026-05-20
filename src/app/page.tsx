@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { ENV } from '@/config/env';
 
 const fetchUser = async (accessToken: string) => {
-  const [, setError] = useState<Error | null>(null);
   try {
     const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
       method: "GET",
@@ -33,15 +32,15 @@ const fetchUser = async (accessToken: string) => {
     }
   } catch (err) {
       console.error("Detail Error:", err);
-      setError(() => {
-        throw err;
-      })
+      throw err;
   }
 }
 
 export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
+
+  const [, setError] = useState<Error | null>(null);
 
   const [accessToken] = useState(() => localStorage.getItem('token') || "");
   const { isLoggedIn } = useAuth();
@@ -53,13 +52,20 @@ export default function HomePage() {
   useEffect(() => {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
-        const data = await fetchUser(accessToken);
+        try {
+          const data = await fetchUser(accessToken);
         
-        if (data) {
-          setProfile({
-            name: data.username || profile.name,
-            profileUrl: data.profile_image_url || profile.profileUrl 
-          });
+          if (data) {
+            setProfile({
+              name: data.username || profile.name,
+              profileUrl: data.profile_image_url || profile.profileUrl 
+            });
+          }
+        } catch (err) {
+          console.log(err);
+          setError(() => {
+            throw err;
+          })
         }
       }
     };
