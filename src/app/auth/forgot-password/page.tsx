@@ -9,12 +9,12 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1 = enter email, 2 = reset password
+  const [, setError] = useState<Error | null>(null);
   const router = useRouter();
 
   const handleSendReset = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setLoading(true);
-    const [, setError] = useState<Error | null>(null);
 
     try {
       const response = await fetch("http://localhost:5000/api/user/forgot-password", {

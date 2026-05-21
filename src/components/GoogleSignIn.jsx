@@ -1,7 +1,7 @@
 import Script from "next/script";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -21,12 +21,7 @@ export default function GoogleSignIn() {
             })
         })
             .then(async response => {
-                if (response.status === 429) {
-                    alert("Terlalu banyak percobaan login. Silakan coba lagi nanti.");
-                } else if(response.status === 401) {
-                    alert("Unauthorized");
-                }
-                else if (response.ok) {
+                if (response.ok) {
                     const data = await response.json()
                     return data;
                 }
@@ -51,25 +46,38 @@ export default function GoogleSignIn() {
                 callback: handleCredentialResponse,
             });
             
-            window.google.accounts.id.renderButton(
-                document.getElementById("sign-in-with-google"),
-                { 
-                    type: "standard",
-                    size: "large", 
-                    theme: "outline", 
-                    text: "sign_in_with", 
-                    shape: "pill",
-                    logo_alignment: "center",
-                    locale: "id",
-                    width: "372" 
-                }
-            );
+            render();
         }
     };
 
+    useEffect(() => {
+        window.addEventListener('resize', render);
+        return () => window.removeEventListener('resize', render);
+    }, [300]); 
+
+    const render = () => {
+        // const buttonWidth = Math.min(280, 324);\
+        const container = document.getElementById('google-button-container');
+        const parentWidth = container.offsetWidth;
+
+        window.google.accounts.id.renderButton(
+            document.getElementById('sign-in-with-google'), 
+            { 
+                type: "standard",
+                size: "large", 
+                theme: "outline", 
+                text: "sign_in_with", 
+                shape: "pill",
+                logo_alignment: "center",
+                locale: "id",
+                width: Math.min(parentWidth, 400) // 3. Inject the dynamic width here
+            }
+        );
+    }
+
     return (
         // default mode popup (data-ux-mode="popup")
-        <div className="flex items-center justify-center py-2.5 md:py-3 lg:py-4 text-base md:text-lg lg:text-2xl">
+        <div className="flex items-center justify-center py-2.5 md:py-3 lg:py-4 text-base md:text-lg lg:text-2xl" id="google-button-container">
             <Script src="https://accounts.google.com/gsi/client" 
                     strategy="afterInteractive"
                     onReady={initializeGoogleSignIn}
