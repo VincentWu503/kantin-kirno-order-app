@@ -13,6 +13,7 @@ export default function GoogleSignIn() {
     const handleCredentialResponse = async (response) => {
         fetch("http://localhost:5000/api/auth/user/google", {
             method: "POST",
+            credentials: "include",
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -56,9 +57,8 @@ export default function GoogleSignIn() {
     }, [300]); 
 
     const render = () => {
-        // const buttonWidth = Math.min(280, 324);\
         const container = document.getElementById('google-button-container');
-        const parentWidth = container.offsetWidth;
+        const parentWidth = container ? container.offsetWidth : 324;
 
         window.google.accounts.id.renderButton(
             document.getElementById('sign-in-with-google'), 
