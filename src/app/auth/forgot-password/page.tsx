@@ -23,13 +23,6 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-      }
-
-      const data = await response.json();
-
       if (response.ok) {
         alert("Link reset password telah dikirim ke email Anda");
         setStep(2);

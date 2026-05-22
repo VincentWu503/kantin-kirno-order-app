@@ -1,4 +1,5 @@
 "use client";
+import { refreshAccessToken } from "@/lib/users";
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext<{
@@ -8,6 +9,7 @@ const AuthContext = createContext<{
   setIsNavigating: (value: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
+  refresh: (accessToken: string) => void;
 }>({
   isLoggedIn: false,
   isLoading: true,
@@ -15,6 +17,7 @@ const AuthContext = createContext<{
   setIsNavigating: () => {},
   login: () => {},
   logout: () => {},
+  refresh: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -44,10 +47,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (response.status === 401) {
-        setIsLoggedIn(false);
-        localStorage.removeItem('token');
+        console.log("Hei! access token kamu expired!");
+        const token = localStorage.getItem("token") || "";
+        await refreshAccessToken(token); // lanjutkan flow
       } else if (response.status === 200) {
-        setIsLoggedIn(true);
+        if (!isLoggedIn) setIsLoggedIn(true);
       }
     } catch (err) {
       console.error("Detail Error:", err);
@@ -79,8 +83,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoggedIn(false);
   };
 
+  const refresh = (newToken: string) => {
+    localStorage.setItem("token", newToken);
+  }
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
