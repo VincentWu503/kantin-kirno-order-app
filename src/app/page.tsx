@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { ENV } from '@/config/env';
+import { refreshAccessToken } from "@/lib/users";
 
 const fetchUser = async (accessToken: string) => {
   try {
@@ -26,8 +27,6 @@ const fetchUser = async (accessToken: string) => {
     if (response.ok) {
       return data;
     } else {
-      // alert(`${data.code}: ${data.description}`);
-      // ini kita gak usah alert, ntar bikin bingung user aja
       return;
     }
   } catch (err) {
