@@ -1,10 +1,11 @@
-import {ENV} from "@/config/env";
+import { ENV } from "@/config/env";
+import { apiRoute } from "@/utils/fetchUtils";
 
 export async function refreshAccessToken(accessToken: string) {
     try {
         console.log('API refresh dipanggil!');
         if (typeof window !== undefined) {
-            const response = await fetch(`${ENV.API_URL}/api/auth/user/refresh`, {
+            const response = await fetch(apiRoute(`/auth/user/refresh`), {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

@@ -2,15 +2,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, ChangeEvent } from "react";
 import { ENV } from '@/config/env';
 import { refreshAccessToken } from "@/lib/users";
-import { fetchMenu } from "@/utils/fetchUtils";
+import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
 import { MenuData, MenuResponseData } from "@/utils/types";
 
 const fetchUser = async (accessToken: string) => {
   try {
-    const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
+    const response = await fetch(apiRoute(`/auth/user/profile`), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -39,13 +39,13 @@ const fetchUser = async (accessToken: string) => {
 
 function MenuCard({ menu }: { menu: MenuData }) {
   return <div className="flex flex-col gap-2 md:gap-3">
-    <div className="bg-gray-200 p-3 md:p-4 rounded-2xl md:rounded-3xl">
+    <div className=" p-3 md:p-4 rounded-2xl md:rounded-3xl">
       <div className="w-full aspect-square bg-red-600 rounded-xl md:rounded-2xl mb-2 md:mb-3"></div>{/* Fix this after dealing with cloudinary */}
       <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
-    <button className="w-full py-2 md:py-2.5 lg:py-3 bg-gray-200 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium hover:bg-gray-300 transition active:scale-95 text-black" disabled={!menu.is_available}>
-      Add to Cart
+    <button className={`mx-3 py-2 md:py-2.5 lg:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium ${menu.is_available ? " bg-gray-200 hover:bg-gray-300 transition active:scale-95 text-black" : 'bg-gray-400 text-gray-300'}`} disabled={!menu.is_available}>
+      {menu.is_available ? "Add to Cart" : "Unavailable"}
     </button>
     { /* Maybe add a special message if item cant be bought*/}
   </div>
@@ -54,6 +54,11 @@ function MenuCard({ menu }: { menu: MenuData }) {
 export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
+
+  const OFFSET_DEFAULT = 0;
+  const LIMIT_DEFAULT = 24;
+  const TIMEOUT_MS = 500;
+
 
   const [, setError] = useState<Error | null>(null);
 
@@ -64,11 +69,17 @@ export default function HomePage() {
     profileUrl: loggedInImage,
   })
 
-  const [offset, setOffset] = useState(0) //magic number, should use offset default constant if exists
-  const [limit, setLimit] = useState(24) //magic number, should use limit default constant if exists
-  const [search, setSearch] = useState<string>(() => "") //magic number, should use limit default constant if exists
+  const [offset, setOffset] = useState(() => OFFSET_DEFAULT)
+  const [limit, setLimit] = useState(LIMIT_DEFAULT)
+  const [search, setSearch] = useState<string>(() => "")
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
   const [menuLoading, setMenuLoading] = useState(true);
+
+  function resetSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    setSearchTimeout(setTimeout(() => setSearch(e.target.value), TIMEOUT_MS))
+  }
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -105,7 +116,7 @@ export default function HomePage() {
   }, [offset, limit, search])
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white ">
       {/* Header */}
       <header className="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 border-b bg-white sticky top-0 z-30">
         <div className="flex items-center gap-3 md:gap-4">
@@ -143,22 +154,22 @@ export default function HomePage() {
       </header>
 
       {/* Search Bar */}
-      <div className="px-4 py-3 md:px-6 md:py-4">
+      <div className="px-4 py-3 md:px-6 md:py-4 lg:w-lg md:w-md sm:w-sm xl:w-xl mx-auto">
         <div className="relative">
           <input
             type="text"
             placeholder="Cari makanan..."
             className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400"
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={resetSearchTimeout}
           />
-          <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl">🔍</span>
+          <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl"><Image width={20} height={20} src="/search.svg" alt="Search symbol"></Image></span>
         </div>
       </div>
 
       {/* Menu Grid */}
       {menuLoading ?
         (<div>Loading...</div>) :
-        (<main className="px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+        (<main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
           {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} />)}
         </main>)
       }
