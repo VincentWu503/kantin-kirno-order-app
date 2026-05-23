@@ -11,7 +11,7 @@ export async function fetchMenu(offset: number, limit: number, search?: string):
 
     let query: string = `?offset=${offset}&limit=${limit}`;
     if (exists(search)) query += `&search=${search}`;
-    const res = await fetch(apiRoute(`/menu${query}`)).then(res => res.json()).then(body => body);
+    const res = await fetch(apiRoute(`/menu${query}`)).then(res => res.json()).then(body => body).catch((e) => e);
 
     return res;
 }

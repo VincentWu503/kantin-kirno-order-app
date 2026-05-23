@@ -9,5 +9,6 @@ export type MenuData = {
 export type MenuResponseData = {
     data: MenuData[],
     offset: number,
-    limit: number
+    limit: number,
+    count: number,
 }
