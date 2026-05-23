@@ -9,6 +9,7 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1 = enter email, 2 = reset password
+  const [, setError] = useState<Error | null>(null);
   const router = useRouter();
 
   const handleSendReset = async (e: React.SubmitEvent) => {
@@ -22,22 +23,15 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-      }
-
-      const data = await response.json();
-
       if (response.ok) {
         alert("Link reset password telah dikirim ke email Anda");
         setStep(2);
-      } else {
-        alert(data.message || "Email tidak ditemukan");
-      }
+      } 
     } catch (err) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err;
+      });
     } finally {
       setLoading(false);
     }

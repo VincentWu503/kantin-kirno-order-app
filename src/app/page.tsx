@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, Suspense } from "react";
 import { ENV } from '@/config/env';
+import { refreshAccessToken } from "@/lib/users";
 import { fetchMenu } from "@/utils/fetchUtils";
 import { MenuData, MenuResponseData } from "@/utils/types";
 
@@ -28,13 +29,11 @@ const fetchUser = async (accessToken: string) => {
     if (response.ok) {
       return data;
     } else {
-      // alert(`${data.code}: ${data.description}`);
-      // ini kita gak usah alert, ntar bikin bingung user aja
       return;
     }
   } catch (err) {
     console.error("Detail Error:", err);
-    alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+    throw err;
   }
 }
 
@@ -56,6 +55,8 @@ export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
 
+  const [, setError] = useState<Error | null>(null);
+
   const [accessToken] = useState(() => localStorage.getItem('token') || "");
   const { isLoggedIn } = useAuth();
   const [profile, setProfile] = useState({
@@ -72,13 +73,20 @@ export default function HomePage() {
   useEffect(() => {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
-        const data = await fetchUser(accessToken);
+        try {
+          const data = await fetchUser(accessToken);
 
-        if (data) {
-          setProfile({
-            name: data.username || profile.name,
-            profileUrl: data.profile_image_url || profile.profileUrl
-          });
+          if (data) {
+            setProfile({
+              name: data.username || profile.name,
+              profileUrl: data.profile_image_url || profile.profileUrl
+            });
+          }
+        } catch (err) {
+          console.log(err);
+          setError(() => {
+            throw err;
+          })
         }
       }
     };

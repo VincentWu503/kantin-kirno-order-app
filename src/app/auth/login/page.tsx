@@ -8,6 +8,7 @@ import GoogleSignIn from "@/components/GoogleSignIn";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [, setError] = useState<Error | null>(null);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -17,6 +18,7 @@ export default function LoginPage() {
     try {
         const response = await fetch("http://localhost:5000/api/auth/user/login", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
@@ -32,12 +34,12 @@ export default function LoginPage() {
         if (response.ok) {
           login(data.token);
           router.push("/"); 
-        } else {
-          alert(data.message || "Login Gagal");
-        }
+        } 
       } catch (err) {
           console.error("Detail Error:", err);
-          alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+          setError(() => {
+            throw err;
+          })
       }
     };
   return (

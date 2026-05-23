@@ -8,6 +8,8 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import Error from "@/app/error";
 
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
@@ -43,9 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${montserrat.className} antialiased bg-gray-50 m-0 p-0`}>
-        <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
-        </AuthProvider>
+          <ErrorBoundary errorComponent={Error}>
+            <AuthProvider>
+                <LayoutContent>{children}</LayoutContent>
+            </AuthProvider>
+          </ErrorBoundary>
       </body>
     </html>
   );
