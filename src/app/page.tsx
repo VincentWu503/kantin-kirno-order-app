@@ -7,6 +7,7 @@ import { ENV } from '@/config/env';
 import { refreshAccessToken } from "@/lib/users";
 import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
 import { MenuData, MenuResponseData } from "@/utils/types";
+import { Pagination, PaginationItem, PaginationRenderItemParams } from "@mui/material";
 
 const fetchUser = async (accessToken: string) => {
   try {
@@ -71,6 +72,7 @@ export default function HomePage() {
 
   const [offset, setOffset] = useState(() => OFFSET_DEFAULT)
   const [limit, setLimit] = useState(LIMIT_DEFAULT)
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState<string>(() => "")
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
@@ -79,6 +81,12 @@ export default function HomePage() {
   function resetSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
     if (searchTimeout) clearTimeout(searchTimeout);
     setSearchTimeout(setTimeout(() => { setSearch(e.target.value); setOffset(0) }, TIMEOUT_MS))
+  }
+
+  function handlePageChange(event: ChangeEvent<unknown, Element>, page: number) {
+    console.log(page);
+    setOffset((page - 1) * limit);
+    setPage(page);
   }
 
   useEffect(() => {
@@ -173,41 +181,15 @@ export default function HomePage() {
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
             {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} />)}
           </main>
-          <div className="px-1 py-1 size-fit mx-auto">
-            <nav aria-label="Pagination" className="flex mx-auto rounded-md shadow-xs">
-              <button
-                onClick={() => setOffset(offset - limit)}
-                disabled={offset - limit < 0}
-                className={`relative flex items-center rounded-l-md px-2 py-2 text-gray-400 inset-ring inset-ring-gray-300  focus:z-20 focus:outline-offset-0 ${offset - limit < 0 ? "bg-gray-300" : "hover:bg-gray-50"}`}
-              >
-                <span className="sr-only">Previous</span>
-                <Image width={20} height={20} src="/arrow-left.svg" alt="Left arrow symbol"></Image>
-              </button>
-              {/* Current: "z-10 bg-indigo-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600", Default: "text-gray-900 inset-ring inset-ring-gray-300 hover:bg-gray-50 focus:outline-offset-0" */}
-              {
-                Array.from(Array(Math.ceil(menu!.count / limit)).keys()).map(i => (
-                  (<a
-                    key={i}
-                    href="#"
-                    onClick={() => setOffset(i * limit)}
-                    aria-current="page"
-                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${Math.floor(offset / limit) == i ? "bg-indigo-600 z-10 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" : "text-gray-900 inset-ring inset-ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"}`}
-                  >
-                    {i + 1}
-                  </a>)
-                )
-                )
-              }
-              <button
-                onClick={() => setOffset(offset + limit)}
-                disabled={offset + limit > menu!.count}
-                className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 inset-ring inset-ring-gray-300 focus:z-20 focus:outline-offset-0 ${offset + limit > menu!.count ? "bg-gray-300" : "hover:bg-gray-50"}`}
-              >
-                <span className="sr-only">Next</span>
-                <Image width={20} height={20} src="/arrow-right.svg" alt="Right arrow symbol"></Image>
-              </button>
-            </nav>
-          </div>
+
+          <Pagination
+            className="size-fit py-3 mx-auto text-2xl"
+            count={Math.ceil(menu!.count / limit)}
+            onChange={handlePageChange}
+            variant="outlined"
+            shape="rounded"
+            page={page}
+          />
         </>)
       }
     </div>
