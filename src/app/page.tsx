@@ -4,38 +4,39 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, Suspense, ChangeEvent } from "react";
 import { ENV } from '@/config/env';
-import { refreshAccessToken } from "@/lib/users";
+import { refreshAccessToken, fetchUser} from "@/lib/users";
 import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
+import { ApiErrorData, MenuData, MenuResponseData, UserData } from "@/utils/types";
+import { ResponseObject } from "@/utils/interfaces";
 
-const fetchUser = async (accessToken: string) => {
-  try {
-    const response = await fetch(apiRoute(`/auth/user/profile`), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-    });
+// const fetchUser = async (accessToken: string) => {
+//   try {
+//     const response = await fetch(apiRoute(`/auth/user/profile`), {
+//       method: "GET",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Authorization": `Bearer ${accessToken}`
+//       },
+//     });
 
-    // Cek apakah respons berupa JSON sebelum di-parse
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-    }
+//     // Cek apakah respons berupa JSON sebelum di-parse
+//     const contentType = response.headers.get("content-type");
+//     if (!contentType || !contentType.includes("application/json")) {
+//       throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
+//     }
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    if (response.ok) {
-      return data;
-    } else {
-      return;
-    }
-  } catch (err) {
-    console.error("Detail Error:", err);
-    throw err;
-  }
-}
+//     if (response.ok) {
+//       return data;
+//     } else {
+//       return;
+//     }
+//   } catch (err) {
+//     console.error("Detail Error:", err);
+//     throw err;
+//   }
+// }
 
 function MenuCard({ menu }: { menu: MenuData }) {
   return <div className="flex flex-col gap-2 md:gap-3">
@@ -62,8 +63,8 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const [accessToken] = useState(() => localStorage.getItem('token') || "");
-  const { isLoggedIn } = useAuth();
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || "");
+  const { isLoggedIn} = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -85,7 +86,8 @@ export default function HomePage() {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
         try {
-          const data = await fetchUser(accessToken);
+          const result: ResponseObject = await fetchUser(accessToken);
+          const data = result.data as UserData
 
           if (data) {
             setProfile({
@@ -93,8 +95,7 @@ export default function HomePage() {
               profileUrl: data.profile_image_url || profile.profileUrl
             });
           }
-        } catch (err) {
-          console.log(err);
+        } catch (err: any) {
           setError(() => {
             throw err;
           })

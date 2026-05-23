@@ -1,5 +1,7 @@
 "use client";
-import { refreshAccessToken } from "@/lib/users";
+import { authMe, refreshAccessToken } from "@/lib/users";
+import { fetchWrapper } from "@/utils/fetchWrapper";
+import { ApiErrorData, TokenData } from "@/utils/types";
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext<{
@@ -9,7 +11,6 @@ const AuthContext = createContext<{
   setIsNavigating: (value: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
-  refresh: (accessToken: string) => void;
 }>({
   isLoggedIn: false,
   isLoading: true,
@@ -17,7 +18,6 @@ const AuthContext = createContext<{
   setIsNavigating: () => {},
   login: () => {},
   logout: () => {},
-  refresh: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -31,32 +31,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [, setError] = useState<Error | null>(null);
 
   const isUserAuthorized = async () => {
+    const token = localStorage.getItem('token') || "";
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch("http://localhost:5000/api/auth/user/me", {
-        method: "GET",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-      });
+      const response = await authMe(token);
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-      }
-
-      if (response.status === 401) {
-        console.log("Hei! access token kamu expired!");
-        const token = localStorage.getItem("token") || "";
-        await refreshAccessToken(token); // lanjutkan flow
-      } else if (response.status === 200) {
+      if (response.status === 200) {
         if (!isLoggedIn) setIsLoggedIn(true);
       }
-    } catch (err) {
-      console.error("Detail Error:", err);
+    } catch (err: any) {
+      const details = JSON.parse(err.message);
+
+      if (details.statusCode === 401 || details.statusCode === 403) {
+          logout();
+          return;
+      }
+
       setError(() => {
-        throw err;
+        throw err as Error;
       })
     }
   }
@@ -83,12 +74,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoggedIn(false);
   };
 
-  const refresh = (newToken: string) => {
-    localStorage.setItem("token", newToken);
-  }
-
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, refresh }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
