@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // TO DO: bikin fetch wrapper
 // karena backend ngirim response json untuk status code error 
 // (selain 2xx)
@@ -15,7 +16,7 @@ let refreshPromise: Promise<string | null> | null = null;
 
 export async function fetchWrapper(endpoint: string, options: RequestInit = {}): Promise<ResponseObject> {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    
+
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -41,8 +42,8 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                         const res = await refreshAccessToken(currentToken);
 
                         const data = res.data as TokenData;
-                        const newToken = data.token 
-                        
+                        const newToken = data.token
+
                         localStorage.setItem('token', newToken);
                         return newToken;
                     })();
@@ -59,15 +60,15 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
 
                     response = await fetch(apiRoute(endpoint), fetchOptions);
                 }
-            } catch (err: any) {  
-                try{
+            } catch (err: any) {
+                try {
                     const oldToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                     const currToken = oldToken || token;
                     console.log('curr token for logout', currToken)
                     if (currToken) {
                         await handleLogoutApi(currToken);
-                    } 
-                }catch  (err: any) {
+                    }
+                } catch (err: any) {
                     console.error(err.message);
                 }
 
@@ -93,6 +94,7 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
         }
 
         // kondisi normal
+
         const isJson = response.headers.get('content-type')?.includes('application/json');
 
         if (response.status === 204) {

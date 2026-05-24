@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { fetchWrapper } from "@/utils/fetchWrapper";
+import { Dialog, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import ErrorDialog from "@/components/ErrorDialog";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -11,12 +14,13 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [openDialog, setOpen] = useState(false);
   const router = useRouter();
 
   const handleRegister = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       alert("Password tidak sama!");
       return;
@@ -25,40 +29,30 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/user/register", {
+      await fetchWrapper("/auth/user/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          email, 
+        body: JSON.stringify({
+          name,
+          email,
           password,
           confirm_password: confirmPassword,
-          phone 
+          phone
         }),
       });
+      alert("Registrasi berhasil! Silakan login.");
+      router.push("/auth/login");
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-      }
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Registrasi berhasil! Silakan login.");
-        router.push("/auth/login");
-      } else {
-        alert(data.message || "Registrasi Gagal");
-      }
     } catch (err) {
       console.error("Detail Error:", err);
-      setError(() => {
-        throw err;
-      })
+      setError(err as Error);
+      setOpen(true);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCloseDialog = () => setOpen(false);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -74,61 +68,61 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Nama Lengkap</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Nomor Telepon</label>
-            <input 
-              type="tel" 
+            <input
+              type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Konfirmasi Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
+              className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-2xl font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95 text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -136,13 +130,20 @@ export default function RegisterPage() {
           </button>
 
           <p className="text-center text-xs md:text-sm text-black">
-            Sudah punya akun? 
+            Sudah punya akun?
             <Link href="/auth/login" className="hover:text-blue-500 hover:underline text-black ml-1">
               Login
             </Link>
           </p>
         </form>
       </div>
-    </div>
+
+      <ErrorDialog
+        openState={openDialog}
+        handleClose={handleCloseDialog}
+        title="Registrasi Pengguna Gagal!"
+        message="Error: Terjadi kesalahan dengan data regsitrasi atau email sudah pernah digunakan sebelumnya"
+      />
+    </div >
   );
 }
