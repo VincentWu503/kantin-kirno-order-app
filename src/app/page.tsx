@@ -7,7 +7,7 @@ import { ENV } from '@/config/env';
 import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
 import { ApiErrorData, MenuData, MenuResponseData, UserData } from "@/utils/types";
 import { MenuData, MenuResponseData } from "@/utils/types";
-import { Pagination, PaginationItem, PaginationRenderItemParams } from "@mui/material";
+import { Alert, Button, CircularProgress, IconButton, Pagination, PaginationItem, PaginationRenderItemParams, Skeleton, Snackbar, SnackbarCloseReason } from "@mui/material";
 
 const fetchUser = async (accessToken: string) => {
   try {
@@ -52,7 +52,11 @@ function MenuCard({ menu }: { menu: MenuData }) {
       <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
-    <button className={`mx-3 py-2 md:py-2.5 lg:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium ${menu.is_available ? " bg-gray-200 hover:bg-gray-300 transition active:scale-95 text-black" : 'bg-gray-400 text-gray-300'}`} disabled={!menu.is_available} >
+    <button
+      className={`mx-3 py-2 md:py-2.5 lg:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium ${menu.is_available ? " bg-gray-200 hover:bg-gray-300 transition active:scale-95 text-black" : 'bg-gray-400 text-gray-300'}`}
+      disabled={!menu.is_available}
+      onClick={() => handle(menu)}
+    >
       {menu.is_available ? "Add to Cart" : "Unavailable"}
     </button>
     { /* Maybe add a special message if item cant be bought*/}
@@ -77,6 +81,8 @@ export default function HomePage() {
     profileUrl: loggedInImage,
   })
 
+  const [snackbarOpen, setSnackbar] = useState(false);
+
   const [offset, setOffset] = useState(() => OFFSET_DEFAULT)
   const [limit, setLimit] = useState(LIMIT_DEFAULT)
   const [page, setPage] = useState(1);
@@ -85,7 +91,7 @@ export default function HomePage() {
   const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
   const [menuLoading, setMenuLoading] = useState(true);
 
-  function resetSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+  function handleSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
     if (searchTimeout) clearTimeout(searchTimeout);
     setSearchTimeout(setTimeout(() => { setSearch(e.target.value); setOffset(0) }, TIMEOUT_MS))
   }
@@ -94,6 +100,12 @@ export default function HomePage() {
     console.log(page);
     setOffset((page - 1) * limit);
     setPage(page);
+  }
+
+  async function handleAddToCart(menu: MenuData) {//TODO: Add Handling add to cart, do after admin menu management is done
+
+
+    setSnackbar(true);
   }
 
   useEffect(() => {
@@ -174,7 +186,7 @@ export default function HomePage() {
             type="text"
             placeholder="Cari makanan..."
             className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400"
-            onChange={resetSearchTimeout}
+            onChange={handleSearchTimeout}
           />
           <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl"><Image width={20} height={20} src="/search.svg" alt="Search symbol"></Image></span>
         </div>
@@ -182,10 +194,10 @@ export default function HomePage() {
 
       {/* Menu Grid */}
       {menuLoading ?
-        (<div className="mx-auto">Loading...</div>) :
+        (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
         (<>
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} />)}
+            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
           </main>
 
           <Pagination
@@ -198,6 +210,17 @@ export default function HomePage() {
           />
         </>)
       }
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(false)}
+        onClick={() => setSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert severity="success" onClick={() => setSnackbar(false)}>
+          Item added successfully to cart
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
