@@ -8,7 +8,7 @@
 // // basic implementation
 import { apiRoute } from "./fetchUtils";
 import { ResponseObject } from "./interfaces";
-import { refreshAccessToken } from "@/lib/users";
+import { handleLogoutApi, refreshAccessToken } from "@/lib/users";
 import { ApiErrorData, TokenData } from "./types";
 
 let refreshPromise: Promise<string | null> | null = null;
@@ -59,7 +59,18 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
 
                     response = await fetch(apiRoute(endpoint), fetchOptions);
                 }
-            } catch (err: any) {
+            } catch (err: any) {  
+                try{
+                    const oldToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                    const currToken = oldToken || token;
+                    console.log('curr token for logout', currToken)
+                    if (currToken) {
+                        await handleLogoutApi(currToken);
+                    } 
+                }catch  (err: any) {
+                    console.error(err.message);
+                }
+
                 localStorage.removeItem('token');
 
                 const errorData = JSON.parse(err.message) as ApiErrorData;
