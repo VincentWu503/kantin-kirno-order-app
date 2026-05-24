@@ -1,5 +1,6 @@
 import { ENV } from "@/config/env";
 import { checkInteger, exists } from "./checkUtils";
+import { MenuData } from "./types";
 
 export function apiRoute(route: string): string {
     return ENV.API_URL + route;
@@ -11,7 +12,11 @@ export async function fetchMenu(offset: number, limit: number, search?: string):
 
     let query: string = `?offset=${offset}&limit=${limit}`;
     if (exists(search)) query += `&search=${search}`;
-    const res = await fetch(apiRoute(`/menu${query}`)).then(res => res.json()).then(body => body);
+    const res = await fetch(apiRoute(`/menu${query}`)).then(res => res.json()).then(body => body).catch((e) => e);
 
     return res;
+}
+
+export async function addToCart(menu: MenuData) {
+    //TODO:
 }
