@@ -1,26 +1,66 @@
 import { ENV } from "@/config/env";
-import { apiRoute } from "@/utils/fetchUtils";
+import { fetchWrapper } from "@/utils/fetchWrapper";
 
 export async function refreshAccessToken(accessToken: string) {
     try {
-        console.log('API refresh dipanggil!');
-        if (typeof window !== undefined) {
-            const response = await fetch(apiRoute(`/auth/user/refresh`), {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Authentication': `Bearer ${accessToken}`
-                }
-            })
+        const result = await fetchWrapper(`/auth/user/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
 
-            let data;
-            if (response) data = await response.json();
+        return result
+    } catch (err) {
+        throw err;
+    }
+}
 
-            return data.token;
-        } else {
-            // window undefined == api call tidak dilakukan di browser
-            throw new Error("Gagal melakukan request ke API!")
-        }
+export async function fetchUser(accessToken: string) {
+    try {
+        const result = await fetchWrapper('/auth/user/profile', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            },
+        });
+
+        return result;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function authMe(accessToken: string) {
+    try {
+        const result = await fetchWrapper(`/auth/user/me`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        return result;
+    } catch (err) {
+        throw err;
+    }
+}
+
+export async function handleLogoutApi(accessToken: string) {
+    try {
+        const result = await fetchWrapper(`/auth/user/logout`, {
+            method: "POST",
+            credentials: 'include',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        return result;
     } catch (err) {
         throw err;
     }

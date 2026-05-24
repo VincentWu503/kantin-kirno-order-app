@@ -4,43 +4,20 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, Suspense, ChangeEvent } from "react";
 import { ENV } from '@/config/env';
-import { refreshAccessToken } from "@/lib/users";
 import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
-
-const fetchUser = async (accessToken: string) => {
-  try {
-    const response = await fetch(apiRoute(`/auth/user/profile`), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-    });
-
-    // Cek apakah respons berupa JSON sebelum di-parse
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-    }
-
-    const data = await response.json();
-
-    if (response.ok) {
-      return data;
-    } else {
-      return;
-    }
-  } catch (err) {
-    console.error("Detail Error:", err);
-    throw err;
-  }
-}
+import { ApiErrorData, MenuData, MenuResponseData, UserData } from "@/utils/types";
 
 function MenuCard({ menu }: { menu: MenuData }) {
-  return <div className="flex flex-col gap-2 md:gap-3">
-    <div className=" p-3 md:p-4 rounded-2xl md:rounded-3xl">
-      <div className="w-full aspect-square bg-red-600 rounded-xl md:rounded-2xl mb-2 md:mb-3"></div>{/* Fix this after dealing with cloudinary */}
+  // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
+  return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
+    <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
+      <div className="w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
+        {menu.image_url ? (
+            <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />
+          ) : (
+            <div className="w-full h-full bg-red-400" />
+        )}
+      </div>{/* Fix this after dealing with cloudinary */}
       <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
@@ -62,8 +39,8 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const [accessToken] = useState(() => localStorage.getItem('token') || "");
-  const { isLoggedIn } = useAuth();
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // takut ngehapus ini, takutnya ngebreak code, biarin aj kalo kurang clean
+  const { isLoggedIn, getUserPayload } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -85,16 +62,15 @@ export default function HomePage() {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
         try {
-          const data = await fetchUser(accessToken);
-
+          // biar gk hit api tiap saat (panggil endpoint profile di profile saja)
+          const data = getUserPayload() as any; // gak peduli w
           if (data) {
             setProfile({
               name: data.username || profile.name,
               profileUrl: data.profile_image_url || profile.profileUrl
             });
           }
-        } catch (err) {
-          console.log(err);
+        } catch (err: any) {
           setError(() => {
             throw err;
           })
