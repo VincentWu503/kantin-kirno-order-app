@@ -1,13 +1,14 @@
 "use client";
-import { useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import { fetchWrapper } from "@/utils/fetchWrapper";
-import { Dialog, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import ErrorDialog from "@/components/ErrorDialog";
 
 export default function RegisterPage() {
+
+  const PW_REGEX = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#@$!%*?&])[A-Za-z\\d#@$!%*?&]{3,30}$');
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,10 +17,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [openDialog, setOpen] = useState(false);
+
+  const [validity, setValidity] = useState<{ username: boolean, email: boolean, password: boolean, confirm: boolean, phone: boolean }>({ username: true, email: true, password: true, confirm: true, phone: true });
   const router = useRouter();
 
   const handleRegister = async (e: React.SubmitEvent) => {
     e.preventDefault();
+    setValidity({ ...validity });
 
     if (password !== confirmPassword) {
       alert("Password tidak sama!");
@@ -52,7 +56,48 @@ export default function RegisterPage() {
     }
   };
 
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    setName(e.target.value);
+    if (name.length > 32 || name.length < 4) {
+      setValidity({ ...validity, username: false });
+    } else {
+      setValidity({ ...validity, username: true });
+    }
+  }
+  const handleEmailChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (!email.includes('@')) {
+      setValidity({ ...validity, email: false });
+    } else {
+      setValidity({ ...validity, email: true });
+    }
+  }
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    setPhone(e.target.value);
+    if (phone.length >= 11) {
+      setValidity({ ...validity, phone: true });
+    } else {
+      setValidity({ ...validity, phone: false });
+    }
+  }
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (PW_REGEX.test(password)) {
+      setValidity({ ...validity, password: true });
+    } else {
+      setValidity({ ...validity, password: false });
+    }
+  }
+  const handleConfirmChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+    if (confirmPassword === password) {
+      setValidity({ ...validity, confirm: true });
+    } else {
+      setValidity({ ...validity, confirm: false });
+    }
+  }
   const handleCloseDialog = () => setOpen(false);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -67,59 +112,64 @@ export default function RegisterPage() {
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-black text-center">Registrasi</h2>
 
           <div>
-            <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Nama Lengkap</label>
+            <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Nama Panggilan</label>
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
+          {validity.username ? null : (<span className="text-red-400 block text-xs">Nama harus memiliki 5-32 karakter!</span>)}
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Email</label>
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
+          {validity.email ? null : (<span className="text-red-400 block text-xs">Email tidak valid!</span>)}
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Nomor Telepon</label>
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={handlePhoneChange}
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
+          {validity.phone ? null : (<span className="text-red-400 block text-xs">Nomor HP tidak valid!</span>)}
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Password</label>
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
+          {validity.password ? null : (<span className="text-red-400 block text-xs">Password harus memiliki simbol, huruf kapital, dan huruf kecil dengan panjang minimal 12 karakter!</span>)}
 
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-black">Konfirmasi Password</label>
             <input
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={handleConfirmChange}
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
+          {validity.confirm ? null : (<span className="text-red-400 block text-xs">Password tidak sama!</span>)}
 
           <button
             type="submit"
