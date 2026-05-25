@@ -2,11 +2,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect, Suspense, ChangeEvent } from "react";
-import { ENV } from '@/config/env';
-import { apiRoute, fetchMenu } from "@/utils/fetchUtils";
-import { ApiErrorData, MenuData, MenuResponseData, UserData } from "@/utils/types";
-import { Alert, CircularProgress, Pagination, Snackbar } from "@mui/material";
+import { useState, useEffect, ChangeEvent } from "react";
+import { addToCart, fetchMenu } from "@/utils/fetchUtils";
+import { MenuData, MenuResponseData } from "@/utils/types";
+import { Alert, AlertColor, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { formatIDR } from "@/utils/utils";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -33,6 +33,67 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
   </div>
 }
 
+function LoginPromptDialog({ open, handleClose, }: { open: boolean, handleClose: () => void, }) {
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>
+        Anda Perlu Login Terlebih Dahulu!
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Untuk menambahkan menu ke dalam Cart dan membuat sebuah pesanan, and perlu melakukan login terlebih dahulu.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} variant="outlined" autoFocus>
+          Kembali
+        </Button>
+        <Link href="/auth/login">
+          <Button autoFocus>
+            Login
+          </Button>
+        </Link>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClose, handleConfirm }: { menu: MenuData | null, quantity: number, handleQuantityChange: (n: number) => void, handleClose: () => void, handleConfirm: () => void }) {
+  return (
+    <Dialog open={menu !== null} onClose={handleClose}>
+      {
+        menu == null ?
+          undefined :
+          <>
+            <DialogTitle>
+              Add To Cart
+            </DialogTitle>
+            <Stack direction="row">
+              {menu.image_url ? (
+                <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />  /*Vincent, your problem */
+              ) : (
+                <div className="w-full h-full bg-red-400" />
+              )}
+              <Container className="w-xl">
+                <div className="text-xl font-bold mb-3">{menu.name}</div>
+                <div className="font-medium"><input type="number" value={quantity} className="" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} />x {formatIDR(menu.price)}</div>
+                <div>Total: {formatIDR(quantity * menu.price)}</div>
+              </Container>
+            </Stack>
+            <DialogActions>
+              <Button onClick={handleClose} variant="outlined" autoFocus>
+                Kembali
+              </Button>
+              <Button onClick={handleConfirm} autoFocus>
+                Tambah
+              </Button>
+            </DialogActions>
+          </>
+      }
+    </Dialog>
+  )
+}
+
 export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
@@ -52,6 +113,10 @@ export default function HomePage() {
   })
 
   const [snackbarOpen, setSnackbar] = useState(false);
+  const [severity, setSeverity] = useState("success");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  const [loginDialogOpen, setLoginDialog] = useState(false);
 
   const [offset, setOffset] = useState(() => OFFSET_DEFAULT)
   const [limit, setLimit] = useState(LIMIT_DEFAULT)
@@ -60,6 +125,23 @@ export default function HomePage() {
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
   const [menuLoading, setMenuLoading] = useState(true);
+
+  const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
+  const [menuQuantity, setQuantity] = useState(1);
+
+  async function handleMenuConfirm() {
+    if (currentMenu !== null) {
+      if (await addToCart(currentMenu, menuQuantity, accessToken)) {
+        setSeverity("success");
+        setSnackbarMessage("Menu berhasil dimasukkan!");
+      } else {
+        setSeverity("error");
+        setSnackbarMessage("Menu gagal dimasukkan!");
+      }
+      setSnackbar(true);
+    }
+    setCurrentMenu(null);
+  }
 
   function handleSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
     if (searchTimeout) clearTimeout(searchTimeout);
@@ -72,12 +154,12 @@ export default function HomePage() {
     setPage(page);
   }
 
-  async function handleAddToCart(menu: MenuData) {//TODO: Add Handling add to cart, do after admin menu management is done
-
-
-    setSnackbar(true);
+  function handleAddToCart(menu: MenuData) {
+    if (!isLoggedIn) setLoginDialog(true);
+    setCurrentMenu(menu);
   }
 
+  useEffect(() => setQuantity(1), [currentMenu]);
   useEffect(() => {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
@@ -181,6 +263,16 @@ export default function HomePage() {
           />
         </>)
       }
+
+      {/* Popups */}
+      <AddToCartPromptDialog
+        menu={currentMenu}
+        quantity={menuQuantity}
+        handleClose={() => setCurrentMenu(null)}
+        handleQuantityChange={(n) => setQuantity(n <= 0 ? 1 : (n >= 101 ? 100 : n))}
+        handleConfirm={handleMenuConfirm}
+      />
+      <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -188,8 +280,8 @@ export default function HomePage() {
         onClick={() => setSnackbar(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert severity="success" onClick={() => setSnackbar(false)}>
-          Item added successfully to cart
+        <Alert severity={severity as AlertColor} onClick={() => setSnackbar(false)}>
+          {snackbarMessage}
         </Alert>
       </Snackbar>
     </div>
