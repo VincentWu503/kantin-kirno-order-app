@@ -39,24 +39,49 @@ export async function addToCart(menu: MenuData, quantity: number, accessToken: s
         return true;
     } catch (err) {
         console.error("Allowed Error:", err); // Allowed baby
-        try {
-            await fetchWrapper("/order/cart/" + menu.menu_id, {
-                body: JSON.stringify({
-                    menu_id: menu.menu_id,
-                    quantity: quantity
-                }),
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + accessToken
-                },
-                method: "PATCH",
-                credentials: "include"
-            });
-            return true;
-        } catch (e) {
-            console.error("Detailed Error:", e);
-            return false;
-        }
+        return updateCartItem(menu, quantity, accessToken);
+    }
+}
+
+export async function updateCartItem(menu: MenuData, newQuantity: number, accessToken: string): Promise<boolean> {
+    if (menu == null) return false;
+    if (accessToken == null) return false;
+    try {
+        await fetchWrapper("/order/cart/" + menu.menu_id, {
+            body: JSON.stringify({
+                menu_id: menu.menu_id,
+                quantity: newQuantity
+            }),
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + accessToken
+            },
+            method: "PATCH",
+            credentials: "include"
+        });
+        return true;
+    } catch (e) {
+        console.error("Detailed Error:", e);
+        return false;
+    }
+}
+
+export async function deleteCartItem(menu: MenuData, accessToken: string) {
+    if (menu == null) return false;
+    if (accessToken == null) return false;
+
+    try {
+        await fetchWrapper('/order/cart/' + menu.menu_id, {
+            headers: {
+                "Authorization": "Bearer " + accessToken,
+            },
+            method: "DELETE",
+            credentials: "include",
+        })
+        return true;
+    } catch (e) {
+        console.error("Detailed Error:", e);
+        return false;
     }
 }
 
