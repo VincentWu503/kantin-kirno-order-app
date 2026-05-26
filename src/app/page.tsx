@@ -8,7 +8,7 @@ import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
 import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 
-function MenuCard({ menu, handle, isLoggedIn }: { menu: MenuData, handle: (menu: MenuData) => void, isLoggedIn: boolean }) {
+function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
   return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
     <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
@@ -105,7 +105,7 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // takut ngehapus ini, takutnya ngebreak code, biarin aj kalo kurang clean
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // Nico: Jangan dihapus, kepakek di beberapa fungsi fetch (unless refactor) 
   const { isLoggedIn, getUserPayload } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
@@ -203,7 +203,7 @@ export default function HomePage() {
     async function doProcess() {
       if (currentMenu == null) {
         const response = await fetchAllMenus(accessToken);
-        setMenuCount((response as CartResponseData).items.length);
+        if (response) setMenuCount((response as CartResponseData).items.length);
       }
     }
     doProcess();
