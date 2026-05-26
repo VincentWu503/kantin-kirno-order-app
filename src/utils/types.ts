@@ -3,7 +3,8 @@ export type MenuData = {
     name: string,
     image_url: string,
     price: number,
-    is_available: boolean
+    is_available: boolean,
+    quantity?: number // Only exists from cart requests
 }
 
 export type MenuResponseData = {
@@ -12,6 +13,12 @@ export type MenuResponseData = {
     limit: number,
     count: number,
 }
+
+export type CartResponseData = {
+    items: MenuData[],
+    offset: number,
+    limit: number
+};
 
 export type UserData = {
     user_id: string,

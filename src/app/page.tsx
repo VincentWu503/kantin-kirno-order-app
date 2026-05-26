@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
-import { addToCart, fetchMenu } from "@/utils/fetchUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
-import { Alert, AlertColor, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { addToCart, fetchAllMenus, fetchMenu } from "@/utils/fetchUtils";
+import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
+import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
@@ -127,6 +127,8 @@ export default function HomePage() {
 
   const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
   const [menuQuantity, setQuantity] = useState(1);
+
+  const [menuCount, setMenuCount] = useState(0);
   const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
@@ -198,7 +200,17 @@ export default function HomePage() {
       setMenuLoading(false);
     }
     menuData();
-  }, [offset, limit, search])
+  }, [offset, limit, search]);
+
+  useEffect(() => {
+    async function doProcess() {
+      if (currentMenu == null) {
+        const response = await fetchAllMenus(accessToken);
+        if (response) setMenuCount((response as CartResponseData).items.length);
+      }
+    }
+    doProcess();
+  }, [currentMenu]);
 
   return (
     <div className="min-h-screen bg-white ">
@@ -224,12 +236,14 @@ export default function HomePage() {
 
         <div>
           {isLoggedIn ? (
-            <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
-                <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-              </svg>
-            </Link>
+            <Badge color="secondary" badgeContent={menuCount}>
+              <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
+                  <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                </svg>
+              </Link>
+            </Badge>
           ) : (
             <Link href="/auth/login" className="px-5 md:px-8 py-2 md:py-2.5 bg-blue-500 text-white rounded-full font-bold text-sm md:text-base hover:bg-blue-600 transition-all shadow-sm active:scale-95">
               Login
