@@ -1,5 +1,9 @@
 "use client";
+import { authMe, handleLogoutApi, refreshAccessToken } from "@/lib/users";
+import { fetchWrapper } from "@/utils/fetchWrapper";
+import { ApiErrorData, TokenData} from "@/utils/types";
 import { createContext, useContext, useState, useEffect } from "react";
+import {jwtDecode} from "jwt-decode";
 
 const AuthContext = createContext<{
   isLoggedIn: boolean;
@@ -8,6 +12,8 @@ const AuthContext = createContext<{
   setIsNavigating: (value: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
+  getToken: () => string | null;
+  getUserPayload: () => void;
 }>({
   isLoggedIn: false,
   isLoading: true,
@@ -15,6 +21,8 @@ const AuthContext = createContext<{
   setIsNavigating: () => {},
   login: () => {},
   logout: () => {},
+  getToken: () => null,
+  getUserPayload: () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -25,59 +33,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [, setError] = useState<Error | null>(null);
+  const [token, setToken] = useState("");
+  const [userPayload, setUserPayload] = useState(null);
 
   const isUserAuthorized = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch("http://localhost:5000/api/auth/user/me", {
-        method: "GET",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-      });
+        const response = await authMe(token);
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
+        if (response.status === 200) {
+          if (!isLoggedIn) setIsLoggedIn(true);
+        }
+    } catch (err: any) {
+      const details = JSON.parse(err.message);
+
+      // refresh token gagal
+      if (details.statusCode === 401 || details.statusCode === 403) { 
+          logout();
+          setIsLoading(false);
+          return;
       }
 
-      if (response.status === 401) {
-        setIsLoggedIn(false);
-        localStorage.removeItem('token');
-      } else if (response.status === 200) {
-        setIsLoggedIn(true);
-      }
-    } catch (err) {
-      console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError(() => {
+        throw err as Error;
+      })
     }
   }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     isUserAuthorized();
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if(token) {
+      setToken(token);
+    } else {
+      setIsLoggedIn(false);
+      return;
+    }
+
+    const decoded = jwtDecode(token);
+
+    setUserPayload(decoded as any);
+
+    setIsLoading(false);
+  }, [])
+
   const login = (token: string) => {
-    localStorage.setItem("token", token);
-    setIsLoggedIn(true);
+    if (token) {
+      setToken(token);
+
+      localStorage.setItem("token", token);
+      const decoded = jwtDecode(token);
+
+      setUserPayload(decoded as any);
+
+      setIsLoggedIn(true);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
+      setToken("");
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      setUserPayload(null);
   };
 
+  const getToken = () => {return token};
+
+  const getUserPayload = () => {
+    return userPayload;
+  }
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, getToken, getUserPayload }}>
       {children}
     </AuthContext.Provider>
   );

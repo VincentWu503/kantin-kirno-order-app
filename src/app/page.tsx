@@ -2,61 +2,181 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect } from "react";
-import { ENV } from '@/config/env';
+import { useState, useEffect, ChangeEvent } from "react";
+import { addToCart, fetchMenu } from "@/utils/fetchUtils";
+import { MenuData, MenuResponseData } from "@/utils/types";
+import { Alert, AlertColor, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { formatIDR } from "@/utils/utils";
 
-const fetchUser = async (accessToken: string) => {
-  try {
-    const response = await fetch(`${ENV.API_URL}/api/auth/user/profile`, {
-      method: "GET",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-       },
-    });
+function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
+  // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
+  return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
+    <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
+      <div className="w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
+        {menu.image_url ? (
+          <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />
+        ) : (
+          <div className="w-full h-full bg-red-400" />
+        )}
+      </div>{/* Fix this after dealing with cloudinary */}
+      <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
+      <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
+    </div>
+    <button
+      className={`mx-3 py-2 md:py-2.5 lg:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium ${menu.is_available ? " bg-gray-200 hover:bg-gray-300 transition active:scale-95 text-black" : 'bg-gray-400 text-gray-300'}`}
+      disabled={!menu.is_available}
+      onClick={() => handle(menu)}
+    >
+      {menu.is_available ? "Add to Cart" : "Unavailable"}
+    </button>
+    { /* Maybe add a special message if item cant be bought*/}
+  </div>
+}
 
-    // Cek apakah respons berupa JSON sebelum di-parse
-    const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Server tidak mengirimkan JSON. Periksa apakah backend menyala.");
-    }
+function LoginPromptDialog({ open, handleClose, }: { open: boolean, handleClose: () => void, }) {
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>
+        Anda Perlu Login Terlebih Dahulu!
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Untuk menambahkan menu ke dalam Cart dan membuat sebuah pesanan, and perlu melakukan login terlebih dahulu.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} variant="outlined" autoFocus>
+          Kembali
+        </Button>
+        <Link href="/auth/login">
+          <Button autoFocus>
+            Login
+          </Button>
+        </Link>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
-    const data = await response.json();
-
-    if (response.ok) {
-      return data;
-    } else {
-      // alert(`${data.code}: ${data.description}`);
-      // ini kita gak usah alert, ntar bikin bingung user aja
-      return;
-    }
-  } catch (err) {
-      console.error("Detail Error:", err);
-      alert("Terjadi kesalahan: " + (err instanceof Error ? err.message : "Unknown error"));
-  }
+function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClose, handleConfirm }: { menu: MenuData | null, quantity: number, handleQuantityChange: (n: number) => void, handleClose: () => void, handleConfirm: () => void }) {
+  return (
+    <Dialog open={menu !== null} onClose={handleClose}>
+      {
+        menu == null ?
+          undefined :
+          <>
+            <DialogTitle>
+              Add To Cart
+            </DialogTitle>
+            <Stack direction="row">
+              {menu.image_url ? (
+                <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />  /*Vincent, your problem */
+              ) : (
+                <div className="w-full h-full bg-red-400" />
+              )}
+              <Container className="w-xl">
+                <div className="text-xl font-bold mb-3">{menu.name}</div>
+                <div className="font-medium"><input type="number" value={quantity} className="" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} />x {formatIDR(menu.price)}</div>
+                <div>Total: {formatIDR(quantity * menu.price)}</div>
+              </Container>
+            </Stack>
+            <DialogActions>
+              <Button onClick={handleClose} variant="outlined" autoFocus>
+                Kembali
+              </Button>
+              <Button onClick={handleConfirm} autoFocus>
+                Tambah
+              </Button>
+            </DialogActions>
+          </>
+      }
+    </Dialog>
+  )
 }
 
 export default function HomePage() {
   const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
 
-  const [accessToken] = useState(() => localStorage.getItem('token') || "");
-  const { isLoggedIn } = useAuth();
-  const [ profile, setProfile ] = useState({
+  const OFFSET_DEFAULT = 0;
+  const LIMIT_DEFAULT = 12;
+  const TIMEOUT_MS = 500;
+
+
+  const [, setError] = useState<Error | null>(null);
+
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // takut ngehapus ini, takutnya ngebreak code, biarin aj kalo kurang clean
+  const { isLoggedIn, getUserPayload } = useAuth();
+  const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
   })
 
+  const [snackbarOpen, setSnackbar] = useState(false);
+  const [severity, setSeverity] = useState("success");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  const [loginDialogOpen, setLoginDialog] = useState(false);
+
+  const [offset, setOffset] = useState(() => OFFSET_DEFAULT)
+  const [limit, setLimit] = useState(LIMIT_DEFAULT)
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState<string>(() => "")
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [menu, setMenu] = useState<MenuResponseData | null>(() => null);
+  const [menuLoading, setMenuLoading] = useState(true);
+
+  const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
+  const [menuQuantity, setQuantity] = useState(1);
+
+  async function handleMenuConfirm() {
+    if (currentMenu !== null) {
+      if (await addToCart(currentMenu, menuQuantity, accessToken)) {
+        setSeverity("success");
+        setSnackbarMessage("Menu berhasil dimasukkan!");
+      } else {
+        setSeverity("error");
+        setSnackbarMessage("Menu gagal dimasukkan!");
+      }
+      setSnackbar(true);
+    }
+    setCurrentMenu(null);
+  }
+
+  function handleSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    setSearchTimeout(setTimeout(() => { setSearch(e.target.value); setOffset(0) }, TIMEOUT_MS))
+  }
+
+  function handlePageChange(event: ChangeEvent<unknown, Element>, page: number) {
+    console.log(page);
+    setOffset((page - 1) * limit);
+    setPage(page);
+  }
+
+  function handleAddToCart(menu: MenuData) {
+    if (!isLoggedIn) setLoginDialog(true);
+    setCurrentMenu(menu);
+  }
+
+  useEffect(() => setQuantity(1), [currentMenu]);
   useEffect(() => {
     const loadProfile = async () => {
       if (isLoggedIn && accessToken) {
-        const data = await fetchUser(accessToken);
-        
-        if (data) {
-          setProfile({
-            name: data.username || profile.name,
-            profileUrl: data.profile_image_url || profile.profileUrl 
-          });
+        try {
+          // biar gk hit api tiap saat (panggil endpoint profile di profile saja)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const data = getUserPayload() as any; // gak peduli w
+          if (data) {
+            setProfile({
+              name: data.username || profile.name,
+              profileUrl: data.profile_image_url || profile.profileUrl
+            });
+          }
+        } catch (err: unknown) {
+          setError(() => {
+            throw err;
+          })
         }
       }
     };
@@ -64,16 +184,26 @@ export default function HomePage() {
     loadProfile();
   }, [isLoggedIn, accessToken]);
 
+  useEffect(() => {
+    const menuData = async () => {
+      setMenuLoading(true);
+      const menus = await fetchMenu(offset, limit, search || undefined);
+      setMenu(menus as MenuResponseData);
+      setMenuLoading(false);
+    }
+    menuData();
+  }, [offset, limit, search])
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white ">
       {/* Header */}
       <header className="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 border-b bg-white sticky top-0 z-30">
         <div className="flex items-center gap-3 md:gap-4">
           {/* Profile Image Logic */}
           <div className="relative w-10 h-10 md:w-14 md:h-14 overflow-hidden rounded-full border-2 border-gray-100 shadow-sm">
-            <Image 
-              src={isLoggedIn ? profile.profileUrl : guestImage} 
-              alt="Profile" 
+            <Image
+              src={isLoggedIn ? profile.profileUrl : guestImage}
+              alt="Profile"
               fill
               className="object-cover"
             />
@@ -90,8 +220,8 @@ export default function HomePage() {
           {isLoggedIn ? (
             <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
-                <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
               </svg>
             </Link>
           ) : (
@@ -103,32 +233,57 @@ export default function HomePage() {
       </header>
 
       {/* Search Bar */}
-      <div className="px-4 py-3 md:px-6 md:py-4">
+      <div className="px-4 py-3 md:px-6 md:py-4 lg:w-lg md:w-md sm:w-sm xl:w-xl mx-auto">
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Cari makanan..." 
-            className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400" 
+          <input
+            type="text"
+            placeholder="Cari makanan..."
+            className="w-full p-3 md:p-4 text-sm md:text-base bg-gray-100 rounded-2xl md:rounded-3xl pl-10 md:pl-12 focus:outline-none focus:ring-2 focus:ring-red-500 text-black placeholder-gray-400"
+            onChange={handleSearchTimeout}
           />
-          <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl">🔍</span>
+          <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-lg md:text-xl"><Image width={20} height={20} src="/search.svg" alt="Search symbol"></Image></span>
         </div>
       </div>
 
       {/* Menu Grid */}
-      <main className="px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-        {[1, 2, 3, 4].map((item) => (
-          <div key={item} className="flex flex-col gap-2 md:gap-3">
-            <div className="bg-gray-200 p-3 md:p-4 rounded-2xl md:rounded-3xl">
-              <div className="w-full aspect-square bg-red-600 rounded-xl md:rounded-2xl mb-2 md:mb-3"></div>
-              <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">Nama Makanan</p>
-              <p className="text-xs md:text-sm text-black">Rp 20.000</p>
-            </div>
-            <button className="w-full py-2 md:py-2.5 lg:py-3 bg-gray-200 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium hover:bg-gray-300 transition active:scale-95 text-black">
-              add to cart
-            </button>
-          </div>
-        ))}
-      </main>
+      {menuLoading ?
+        (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
+        (<>
+          <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
+            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+          </main>
+
+          <Pagination
+            className="size-fit py-3 mx-auto text-2xl"
+            count={Math.ceil(menu!.count / limit)}
+            onChange={handlePageChange}
+            variant="outlined"
+            shape="rounded"
+            page={page}
+          />
+        </>)
+      }
+
+      {/* Popups */}
+      <AddToCartPromptDialog
+        menu={currentMenu}
+        quantity={menuQuantity}
+        handleClose={() => setCurrentMenu(null)}
+        handleQuantityChange={(n) => setQuantity(n <= 0 ? 1 : (n >= 101 ? 100 : n))}
+        handleConfirm={handleMenuConfirm}
+      />
+      <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(false)}
+        onClick={() => setSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert severity={severity as AlertColor} onClick={() => setSnackbar(false)}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
