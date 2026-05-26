@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ENV } from "@/config/env";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -126,7 +127,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/reset-password", {
+      const response = await fetch(`${ENV.API_URL}/user/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

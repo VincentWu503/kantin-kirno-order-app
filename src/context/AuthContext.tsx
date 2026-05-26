@@ -45,7 +45,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!isLoggedIn) setIsLoggedIn(true);
         }
     } catch (err: any) {
-      const details = JSON.parse(err.message);
+      console.log(err.message)
+      if (err.message === 'Fetch Error: Failed to fetch') {
+        throw err;
+      }
+
+      let details;
+      try {
+        details = JSON.parse(err.message);
+      } catch (err) {
+        throw new Error(JSON.stringify({
+          message: "Terjadi kesalahan!"
+        }));
+      }
 
       // refresh token gagal
       if (details.statusCode === 401 || details.statusCode === 403) { 
@@ -55,13 +67,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setError(() => {
-        throw err as Error;
+        throw err as Error
       })
     }
   }
 
   useEffect(() => {
     isUserAuthorized();
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
