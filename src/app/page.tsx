@@ -12,7 +12,7 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
   return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
     <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
-      <div className="w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
+      <div className="flex justify-center items-center w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
         {menu.image_url ? (
           <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />
         ) : (
@@ -49,7 +49,7 @@ function LoginPromptDialog({ open, handleClose, }: { open: boolean, handleClose:
           Kembali
         </Button>
         <Link href="/auth/login">
-          <Button autoFocus>
+          <Button variant="outlined" autoFocus>
             Login
           </Button>
         </Link>
@@ -68,23 +68,23 @@ function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClo
             <DialogTitle>
               Add To Cart
             </DialogTitle>
-            <Stack direction="row">
+            <Stack direction="row" spacing={2}>
               {menu.image_url ? (
-                <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />  /*Vincent, your problem */
+                <img src={menu.image_url} alt={menu.name} className="w-full h-full min-w-32 object-cover rounded-sm px-6 pr-0" />  /*Vincent, your problem */
               ) : (
                 <div className="w-full h-full bg-red-400" />
               )}
-              <Container className="w-xl">
-                <div className="text-xl font-bold mb-3">{menu.name}</div>
-                <div className="font-medium"><input type="number" value={quantity} className="" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} />x {formatIDR(menu.price)}</div>
+              <Container className="w-xl pl-0 sm:pl-3 text-xs sm:text-base md:text-lg md:pl-5">
+                <div className="font-bold mb-3 ">{menu.name}</div>
+                <div className="font-medium mb-1"><input type="number" value={quantity} className="w-7 md:w-10" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} /> x {formatIDR(menu.price)}</div>
                 <div>Total: {formatIDR(quantity * menu.price)}</div>
               </Container>
             </Stack>
             <DialogActions>
-              <Button onClick={handleClose} variant="outlined" autoFocus>
+              <Button onClick={handleClose} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
                 Kembali
               </Button>
-              <Button onClick={handleConfirm} autoFocus>
+              <Button onClick={handleConfirm} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
                 Tambah
               </Button>
             </DialogActions>
@@ -105,8 +105,7 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // takut ngehapus ini, takutnya ngebreak code, biarin aj kalo kurang clean
-  const { isLoggedIn, getUserPayload } = useAuth();
+  const { isLoggedIn, getUserPayload, getToken } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -128,6 +127,11 @@ export default function HomePage() {
 
   const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
   const [menuQuantity, setQuantity] = useState(1);
+  const [accessToken, setAccessToken] = useState("");
+
+  useEffect(() => {
+    setAccessToken(getToken() || "");
+  }, [])
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
@@ -155,8 +159,10 @@ export default function HomePage() {
   }
 
   function handleAddToCart(menu: MenuData) {
-    if (!isLoggedIn) setLoginDialog(true);
-    setCurrentMenu(menu);
+    if (!isLoggedIn) {
+      return setLoginDialog(true);
+    }
+    else return setCurrentMenu(menu);
   }
 
   useEffect(() => setQuantity(1), [currentMenu]);

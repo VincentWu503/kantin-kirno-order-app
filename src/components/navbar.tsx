@@ -16,7 +16,7 @@ const navItems = [
 export default function Navbar() {
   return (
     <nav className="fixed left-0 right-0 z-40 bg-[#0084ff] text-white shadow-lg 
-                    md:top-0 md:h-16 
+                    md:top-0 md:h-16 z-50
                     max-md:bottom-0 max-md:h-20">
       <div className="flex h-full items-center justify-around px-4 max-w-screen-xl mx-auto">
         {navItems.map((item) => (

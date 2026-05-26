@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  allowedDevOrigins: [
+    '192.168.1.175',
+    'rocky-moonstone-unharmed.ngrok-free.dev'
+  ]
 };
 
 export default nextConfig;
