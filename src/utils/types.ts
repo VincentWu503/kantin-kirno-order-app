@@ -13,6 +13,12 @@ export type MenuResponseData = {
     count: number,
 }
 
+export type CartResponseData = {
+    items: MenuData[],
+    offset: number,
+    limit: number
+};
+
 export type UserData = {
     user_id: string,
     username: string,

@@ -1,7 +1,9 @@
 import { ENV } from "@/config/env";
 import { checkInteger, exists } from "./checkUtils";
-import { MenuData } from "./types";
+import { MenuData, MenuResponseData } from "./types";
 import { fetchWrapper } from "./fetchWrapper";
+import { access } from "fs";
+import { TrySharp } from "@mui/icons-material";
 
 export function apiRoute(route: string): string {
     return ENV.API_URL + route;
@@ -52,8 +54,27 @@ export async function addToCart(menu: MenuData, quantity: number, accessToken: s
             });
             return true;
         } catch (e) {
-            console.error("Detailed Error:", err);
+            console.error("Detailed Error:", e);
             return false;
         }
+    }
+}
+
+export async function fetchAllMenus(accessToken: string): Promise<unknown | null> { //Unknown, i hate typing in TS
+    if (accessToken == null) return null;
+
+    try {
+        const data = await fetchWrapper('/order/cart', {
+            headers: { "Authorization": "Bearer " + accessToken }
+        });
+
+        if (data.data) {
+            return data.data;
+        } else {
+            throw new Error("Data tidak dapat diambil");
+        }
+    } catch (err) {
+        console.error("Detailed Error:", err);
+        return false;
     }
 }
