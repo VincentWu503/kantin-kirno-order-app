@@ -206,7 +206,11 @@ export default function HomePage() {
     const menuData = async () => {
       setMenuLoading(true);
       const menus = await fetchMenu(offset, limit, search || undefined);
-      setMenu(menus as MenuResponseData);
+      if (menus &&  (menus as MenuResponseData).data) {
+        setMenu(menus as MenuResponseData)
+      } else {
+        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
+      }
       setMenuLoading(false);
     }
     menuData();
@@ -284,12 +288,12 @@ export default function HomePage() {
         (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
         (<>
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+            {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
           </main>
 
           <Pagination
             className="size-fit py-3 mx-auto text-2xl"
-            count={Math.ceil(menu!.count / limit)}
+            count={Math.ceil((menu!.count ?? 0) / limit)}
             onChange={handlePageChange}
             variant="outlined"
             shape="rounded"
