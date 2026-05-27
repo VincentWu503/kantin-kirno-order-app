@@ -4,10 +4,11 @@ import Link from "next/link";
 import { Montserrat } from "next/font/google";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { deleteCartItem, fetchAllMenus, updateCartItem } from "@/utils/fetchUtils";
+import { deleteCartItem, updateCartItem } from "@/lib/cart";
 import { CircularProgress } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
+import { fetchCartItems } from "@/lib/cart";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -80,13 +81,6 @@ export default function CartPage() {
 
     const [snackbarActive, setSnackbar] = useState<boolean>(false);
 
-    const [accessToken, setAccessToken] = useState("");
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAccessToken(getToken() || "");
-    }, [])
-
     function countMenuPriceTotal() {
         if (cart) {
             let res = 0;
@@ -99,19 +93,25 @@ export default function CartPage() {
     }
 
     async function refreshCart() {
-        const response = await fetchAllMenus(accessToken);
+        const accessToken = getToken(); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh 
+        if (!accessToken) return;
+        const response = await fetchCartItems(accessToken);
         if (response != null) setCart((response as CartResponseData));
     }
     useEffect(() => {
+        const token = getToken();
+        if (!token) return;
         async function doProcess() {
             setLoading(true);
             await refreshCart();
             setLoading(false);
         }
         doProcess();
-    }, []);
+    }, [isLoggedIn]);
 
     async function handleMenuChangeQuantity(menu: MenuData, quantity: number): Promise<void> {
+        const accessToken = getToken();
+        if (!accessToken) return;
         if (menu !== null && quantity != 0) { //Basic check
             if (await updateCartItem(menu!, quantity, accessToken)) {
                 setSnackbar(true);
@@ -126,6 +126,9 @@ export default function CartPage() {
     }
 
     async function handleMenuDelete(menu: MenuData): Promise<boolean> {
+        const accessToken = getToken();
+        if (!accessToken) return false;
+
         if (menu !== null) {
             if (await deleteCartItem(menu, accessToken)) {
                 await refreshCart()
