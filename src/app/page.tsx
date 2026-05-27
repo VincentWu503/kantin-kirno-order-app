@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
-import { addToCart, fetchAllMenus, fetchMenu } from "@/utils/fetchUtils";
+import { fetchMenu } from "@/lib/menu";
 import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
 import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
+import { addToCart, fetchCartItems } from "@/lib/cart";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -142,7 +143,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setAccessToken(getToken() || "");
-  }, [])
+  }, [isLoggedIn])
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
@@ -214,12 +215,16 @@ export default function HomePage() {
   useEffect(() => {
     async function doProcess() {
       if (currentMenu == null) {
-        const response = await fetchAllMenus(accessToken);
-        if (response) setMenuCount((response as CartResponseData).items.length);
+        const token = getToken();
+        if (!token) return;
+
+        const response = await fetchCartItems(token);
+        if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
+        // example: SELECT COUNT from database, return those count value as count field
       }
     }
     doProcess();
-  }, [currentMenu]);
+  }, [currentMenu, isLoggedIn]);
 
   return (
     <div className="min-h-screen bg-white ">

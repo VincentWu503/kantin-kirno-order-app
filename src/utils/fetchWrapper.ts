@@ -50,7 +50,6 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                 }
 
                 const newToken = await refreshPromise;
-                console.log(newToken);
 
                 if (newToken) {
                     fetchOptions.headers = {
@@ -65,7 +64,6 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                 try {
                     const oldToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                     const currToken = oldToken || token;
-                    console.log('curr token for logout', currToken)
                     if (currToken) {
                         await handleLogoutApi(currToken);
                     }
