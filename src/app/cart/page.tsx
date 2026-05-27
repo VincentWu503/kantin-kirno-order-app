@@ -177,14 +177,9 @@ export default function CartPage() {
 
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
-                <Link href="/cart/takeaway" className="flex-1">
-                    <button className={`${montserrat.className} w-full bg-red-500 text-white py-7 rounded-2xl text-5xl font-bold hover:bg-blue-700 transition`}>
-                        Take Away
-                    </button>
-                </Link>
-                <Link href="/cart/delivery" className="flex-1">
-                    <button className={`${montserrat.className} w-full bg-red-500 text-white py-7 rounded-2xl text-5xl font-bold hover:bg-blue-700 transition`}>
-                        Delivery UNTAR 1
+                <Link href="/cart/checkout" className="flex-1">
+                    <button className={`${montserrat.className} w-full border-green-400 border-2 text-green-400 py-7 rounded-2xl text-5xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                        Checkout
                     </button>
                 </Link>
             </div>
