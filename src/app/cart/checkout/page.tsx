@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { ChangeEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { Montserrat } from "next/font/google";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { CircularProgress, FormControl, FormControlLabel, FormLabel, Input, InputLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Checkbox, CircularProgress, FormControl, FormControlLabel, FormGroup, FormLabel, Input, InputLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
-import { Error } from "@mui/icons-material";
+import { CheckBox, Error } from "@mui/icons-material";
 import { fetchAllMenus, fetchCartPrice } from "@/lib/cart";
 import { jwtDecode } from "jwt-decode";
 import { fetchUser } from "@/lib/users";
@@ -44,6 +44,8 @@ export default function CartPage() {
     const [phone, setPhone] = useState<string>("");
     const [name, setName] = useState<string>("");
 
+    const [checked, setCheck] = useState<boolean>(false);
+
     const [error, setError] = useState<{
         phone: boolean,
         location: boolean,
@@ -56,6 +58,11 @@ export default function CartPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setError({ ...error, phone: !PHONE_REGEX.test(phone) });
     }, [phone]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setError({ ...error, location: location.building.length == 0 || location.floor.length == 0 });
+    }, [location])
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -89,6 +96,10 @@ export default function CartPage() {
     }
     function handleNotesChange(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setNotes(e.target.value);
+    }
+
+    function handleCheckChange(e: SyntheticEvent<Element, Event>, checked: boolean) {
+        setCheck(checked);
     }
 
 
@@ -144,7 +155,7 @@ export default function CartPage() {
                 {/* Order details Form*/}
                 <div className="col-span-2 h-fit">
                     <div className="px-2 py-2 h-fit font-bold text-2xl">Pemesanan</div>
-                    <Paper className="col-span-2 h-fit p-3">
+                    <Paper className="col-span-2 h-fit p-3" elevation={2}>
                         { /* Account Info Needs profile data */}
                         <Stack>
                             <div className="font-bold text-3xl">Informasi Pembeli</div>
@@ -177,7 +188,7 @@ export default function CartPage() {
                         {/*Delivery info */}
                         <Stack className="gap-2">
                             <div className="font-bold text-3xl">Pengiriman</div>
-                            <FormControl>
+                            <FormControl required>
                                 <FormLabel>Opsi Pengiriman</FormLabel>
                                 <RadioGroup row value={takeaway ? "takeaway" : "deliver"} onChange={handleDeliverChoiceChanged}>
                                     <FormControlLabel control={<Radio />} value={"deliver"} label="Antar ke Untar 1"></FormControlLabel>
@@ -185,7 +196,7 @@ export default function CartPage() {
                                 </RadioGroup>
                             </FormControl>
                             <Stack direction="row" className="gap-2">
-                                <FormControl className="w-fit">
+                                <FormControl required className="w-fit" error={error.location && !takeaway}>
                                     <FormLabel className="text-center">Gedung</FormLabel>
                                     <Select value={location.building} onChange={handleBuildingChange} disabled={takeaway} className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}>
                                         <MenuItem value="Utama">Utama</MenuItem>
@@ -196,7 +207,7 @@ export default function CartPage() {
                                         <MenuItem value="R">R</MenuItem>
                                     </Select>
                                 </FormControl>
-                                <FormControl className="w-fit" >
+                                <FormControl required className="w-fit" error={error.location && !takeaway}>
                                     <FormLabel className="text-center">Lantai</FormLabel>
                                     <OutlinedInput startAdornment="Lt. " value={location.floor} onChange={handleFloorChange} className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`} slotProps={{ input: { className: "text-center w-10" } }} disabled={takeaway}></OutlinedInput>
                                 </FormControl>
@@ -261,8 +272,16 @@ export default function CartPage() {
                         </div>
                     </Paper>
 
+                    {/* I Agree Checkboxes */}
+                    <FormGroup className="h-fit p-2 text-xl font-bold rounded-xl my-4 mx-2">
+                        <FormControlLabel label={<span className="text-blue-900">Saya setuju bahwa data yang saya masukkan sudah sesuai</span>} control={<Checkbox value={checked} onChange={handleCheckChange} />} required />
+                    </FormGroup>
+
                     {/*Order button*/}
-                    <button className="h-fit p-2 text-2xl font-bold text-white bg-green-600 rounded-xl my-4 self-end">
+                    <button
+                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${(!checked || error.location || error.phone) ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
+                        disabled={checked}
+                    >
                         Bayar Pesanan &rarr;
                     </button>
                 </div>

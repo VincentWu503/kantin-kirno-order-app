@@ -76,6 +76,7 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                 let errorData;
                 try {
                     errorData = JSON.parse(err.message) as ApiErrorData;
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (err) {
                     // kasus JSON parse error, karena nyoba parse fetch api error
                     errorData = {
