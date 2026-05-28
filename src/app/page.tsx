@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
-import { addToCart, fetchAllMenus, fetchMenu } from "@/utils/fetchUtils";
+import { fetchMenu } from "@/lib/menu";
 import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
 import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
+import { addToCart, fetchCartItems } from "@/lib/cart";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -18,8 +19,17 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
         ) : (
           <div className="w-full h-full bg-red-400" />
         )}
-      </div>{/* Fix this after dealing with cloudinary */}
-      <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
+      </div>
+      {/* <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p> */}
+
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent:'space-between'}}>
+        <span className="text-xs md:text-sm lg:text-base font-medium text-black truncate">{menu.name}</span>
+        {
+          menu.is_available ? 
+          <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> : 
+          <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
+        }
+      </Stack>  
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
     <button
@@ -133,7 +143,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setAccessToken(getToken() || "");
-  }, [])
+  }, [isLoggedIn])
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
@@ -196,7 +206,11 @@ export default function HomePage() {
     const menuData = async () => {
       setMenuLoading(true);
       const menus = await fetchMenu(offset, limit, search || undefined);
-      setMenu(menus as MenuResponseData);
+      if (menus &&  (menus as MenuResponseData).data) {
+        setMenu(menus as MenuResponseData)
+      } else {
+        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
+      }
       setMenuLoading(false);
     }
     menuData();
@@ -205,12 +219,16 @@ export default function HomePage() {
   useEffect(() => {
     async function doProcess() {
       if (currentMenu == null) {
-        const response = await fetchAllMenus(accessToken);
-        if (response) setMenuCount((response as CartResponseData).items.length);
+        const token = getToken();
+        if (!token) return;
+
+        const response = await fetchCartItems(token);
+        if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
+        // example: SELECT COUNT from database, return those count value as count field
       }
     }
     doProcess();
-  }, [currentMenu]);
+  }, [currentMenu, isLoggedIn]);
 
   return (
     <div className="min-h-screen bg-white ">
@@ -270,12 +288,12 @@ export default function HomePage() {
         (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
         (<>
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+            {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
           </main>
 
           <Pagination
             className="size-fit py-3 mx-auto text-2xl"
-            count={Math.ceil(menu!.count / limit)}
+            count={Math.ceil((menu!.count ?? 0) / limit)}
             onChange={handlePageChange}
             variant="outlined"
             shape="rounded"
