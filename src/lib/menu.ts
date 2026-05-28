@@ -1,7 +1,7 @@
 import { checkInteger, exists } from "@/utils/checkUtils";
 import { apiRoute } from "@/utils/fetchUtils";
 
-export async function fetchMenu(offset: number, limit: number, search?: string): Promise<unknown> {
+export async function fetchMenu(offset: number, limit: number, search?: string) {
     checkInteger(offset, 0);
     checkInteger(limit, 0);
 

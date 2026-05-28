@@ -36,9 +36,8 @@ export default function GoogleSignIn() {
              })
             .catch(err => {
                 console.error("Detail Error:", err);
-                setError(() => {
-                    throw err;
-                })
+                setError(err);
+                onError?.(err);
             });
     }
 

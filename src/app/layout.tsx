@@ -15,9 +15,10 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "@/theme";
 
-
-const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500", "700"], variable: '--font-montserrat' });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -52,11 +53,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${montserrat.className} antialiased bg-gray-50 m-0 p-0`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <ErrorBoundary errorComponent={Error}>
-            <AuthProvider>
-              <LayoutContent>{children}</LayoutContent>
-            </AuthProvider>
-          </ErrorBoundary>
+          <ThemeProvider theme={theme}>
+            <ErrorBoundary errorComponent={Error}>
+              <AuthProvider>
+                <LayoutContent>{children}</LayoutContent>
+              </AuthProvider>
+            </ErrorBoundary>
+          </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
     </html>

@@ -14,6 +14,16 @@ import { ApiErrorData, TokenData } from "./types";
 
 let refreshPromise: Promise<string | null> | null = null;
 
+/**
+ * Custom implementation of fetch API to throw response status 400 - 599 as an error;
+ * and for refresh token flow handling.
+ *
+ * @param {string} endpoint - The API endpoint to be called, starts after /api prefix.
+ * Passed endpoint string must not include full API URL, just provide relative path starting after /api
+ * @param {object} options - Fetch API options.
+ * @returns {Promise<ResponseObject>} Response object containing status field and API response data.
+ * @throws {Error} Throws an error if refresh token failed, or request failed.
+ */
 export async function fetchWrapper(endpoint: string, options: RequestInit = {}): Promise<ResponseObject> {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -31,9 +41,20 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
         }
 
         let response = await fetch(apiRoute(endpoint), fetchOptions);
+        let clone = response.clone();
+
+        let responseData: any = null;
+        const cloneContentType = clone.headers.get('content-type')?.includes('application/json');
+        if (cloneContentType) {
+            try {
+                responseData = await clone.json();
+            } catch (_err) {
+                responseData = null;
+            }
+        }
 
         // kasus unauthorized di endpoint selain refresh (token expired di passport middleware)
-        if (response.status === 401 && !endpoint.includes('/refresh')) {
+        if (response.status === 401 && responseData?.error === "UNAUTHORIZED_ERROR" && !endpoint.includes('/refresh')) {
             try {
                 if (!refreshPromise) {
                     console.log('Refresh token sedang dipanggil...')
@@ -91,7 +112,7 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                 }
 
 
-                if (errorData.statusCode === 401) {
+                if (errorData.statusCode === 401 && errorData.error === "UNAUTHORIZED_ERROR") {
                     throw new Error(JSON.stringify({
                         statusCode: 401,
                         message: "Sesi Anda telah berakhir! Harap login ulang."
@@ -119,7 +140,14 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
             }
         }
 
-        const data = isJson ? await response.json() : null;
+        let data: any = null;
+        if (isJson) {
+            try {
+                data = await response.json();
+            } catch (_err) {
+                data = null;
+            }
+        }
 
         if (!response.ok) {
             throw new Error(JSON.stringify({
