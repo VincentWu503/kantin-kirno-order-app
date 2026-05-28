@@ -75,7 +75,7 @@ export default function LoginPage() {
           <button type="submit" className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-2xl font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95">
             Sign in
           </button>
-          <span className="text-center"><p>Atau</p></span>
+          <span className="text-center text-sm"><p>Atau</p></span>
           <GoogleSignIn />
         </form>
       </div>
