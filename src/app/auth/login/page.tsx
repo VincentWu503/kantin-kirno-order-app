@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useAuth } from "../../../context/AuthContext";
 import GoogleSignIn from "@/components/GoogleSignIn";
 import { fetchWrapper } from "@/utils/fetchWrapper";
+import { Divider } from "@mui/material";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<Error | null>(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  // const [error, setError] = useState<Error | null>(null); // error root layer sebagai last resort
   const { login } = useAuth();
   const router = useRouter();
 
@@ -26,11 +28,16 @@ export default function LoginPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       login((data.data as any).token);
       router.push("/");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Detail Error:", err);
-      setError(() => {
-        throw err;
-      })
+
+      // pastikan error yg dilempar fetchWrapper berbentuk json, biar ini gk error
+      const errData = JSON.parse(err.message);
+
+      setErrorMessage(errData.message || "Terjadi kesalahan saat percobaan login!");
+      // setError(() => {
+      //   throw err;
+      // })
     }
   };
   return (
@@ -41,7 +48,7 @@ export default function LoginPage() {
       </div>
 
       <div className="flex-1 bg-white p-4 md:p-8 -mt-6 md:-mt-8 rounded-t-3xl md:rounded-t-4xl">
-        <form onSubmit={handleLogin} className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto">
+        <form onSubmit={handleLogin} className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto lg:max-w-lg">
           <div>
             <label className="block text-xs md:text-sm lg:text-base font-medium mb-2">Email</label>
             <input
@@ -63,7 +70,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-1 text-gray-500 ">
+          <div className="flex flex-col text-gray-500 mb-0">
             <Link href="/auth/forgot-password" className="py-2 hover:text-blue-600 text-xs hover:underline md:text-sm font-medium text-left transition">
               Lupa Password
             </Link>
@@ -72,11 +79,17 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <button type="submit" className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-2xl font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95">
+          {errorMessage && <span className="text-xs md:text-sm lg:text-base font-medium text-red-500">{errorMessage}</span>}
+
+          <Divider className="mt-2 mb-0"></Divider>
+
+          <button type="submit" 
+          className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-xl 
+          font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95">
             Sign in
           </button>
           <span className="text-center text-sm"><p>Atau</p></span>
-          <GoogleSignIn />
+          <GoogleSignIn/>
         </form>
       </div>
     </div>
