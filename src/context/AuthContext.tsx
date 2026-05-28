@@ -26,18 +26,14 @@ const AuthContext = createContext<{
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("token") ? true : false;
-  });
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const [, setError] = useState<Error | null>(null);
   const [token, setToken] = useState("");
   const [userPayload, setUserPayload] = useState(null);
 
-  const isUserAuthorized = async () => {
+  const isUserAuthorized = async (token: string) => {
     try {
         const response = await authMe(token);
 
@@ -45,7 +41,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!isLoggedIn) setIsLoggedIn(true);
         }
     } catch (err: any) {
-      const details = JSON.parse(err.message);
+      console.log(err.message)
+      if (err.message === 'Fetch Error: Failed to fetch') {
+        throw err;
+      }
+
+      let details;
+      try {
+        details = JSON.parse(err.message);
+      } catch (err) {
+        throw new Error(JSON.stringify({
+          message: "Terjadi kesalahan!"
+        }));
+      }
 
       // refresh token gagal
       if (details.statusCode === 401 || details.statusCode === 403) { 
@@ -55,31 +63,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setError(() => {
-        throw err as Error;
+        throw err as Error
       })
     }
   }
 
   useEffect(() => {
-    isUserAuthorized();
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("token") || "";
+      setToken(storedToken);
+      
+      if (storedToken) {
+        isUserAuthorized(storedToken);
+        const decoded = jwtDecode(storedToken);
+        setUserPayload(decoded as any);
+      }
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if(token) {
-      setToken(token);
-    } else {
-      setIsLoggedIn(false);
-      return;
+    if (token && typeof window !== "undefined") {
+      isUserAuthorized(token);
+      try {
+        const decoded = jwtDecode(token);
+        setUserPayload(decoded as any);
+      } catch (err) {
+        console.error("Invalid token", err);
+      }
     }
-
-    const decoded = jwtDecode(token);
-
-    setUserPayload(decoded as any);
-
-    setIsLoading(false);
-  }, [])
+  }, [token]); // rerender saat token berubah
 
   const login = (token: string) => {
     if (token) {

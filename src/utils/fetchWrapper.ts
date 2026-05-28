@@ -64,7 +64,6 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                 try {
                     const oldToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                     const currToken = oldToken || token;
-                    console.log('curr token for logout', currToken)
                     if (currToken) {
                         await handleLogoutApi(currToken);
                     }
@@ -74,7 +73,22 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
 
                 localStorage.removeItem('token');
 
-                const errorData = JSON.parse(err.message) as ApiErrorData;
+                let errorData;
+                try {
+                    errorData = JSON.parse(err.message) as ApiErrorData;
+                } catch (err) {
+                    // kasus JSON parse error, karena nyoba parse fetch api error
+                    errorData = {
+                        status: 500, // sama aja sih
+                        statusCode: 500, // from be
+                        error: "FETCH_ERROR",
+                        description: "Terjadi kesalahan pada saat memanggil API!",
+                        endpoint: endpoint
+                    }
+
+                    throw new Error(JSON.stringify(errorData));
+                }
+
 
                 if (errorData.statusCode === 401) {
                     throw new Error(JSON.stringify({

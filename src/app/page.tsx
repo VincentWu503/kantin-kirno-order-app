@@ -3,23 +3,33 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
-import { addToCart, fetchMenu } from "@/utils/fetchUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
-import { Alert, AlertColor, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { fetchMenu } from "@/lib/menu";
+import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
+import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
+import { addToCart, fetchCartItems } from "@/lib/cart";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
   return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
     <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
-      <div className="w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
+      <div className="flex justify-center items-center w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
         {menu.image_url ? (
           <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />
         ) : (
           <div className="w-full h-full bg-red-400" />
         )}
-      </div>{/* Fix this after dealing with cloudinary */}
-      <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p>
+      </div>
+      {/* <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p> */}
+
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent:'space-between'}}>
+        <span className="text-xs md:text-sm lg:text-base font-medium text-black truncate">{menu.name}</span>
+        {
+          menu.is_available ? 
+          <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> : 
+          <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
+        }
+      </Stack>  
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
     <button
@@ -49,7 +59,7 @@ function LoginPromptDialog({ open, handleClose, }: { open: boolean, handleClose:
           Kembali
         </Button>
         <Link href="/auth/login">
-          <Button autoFocus>
+          <Button variant="outlined" autoFocus>
             Login
           </Button>
         </Link>
@@ -68,23 +78,23 @@ function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClo
             <DialogTitle>
               Add To Cart
             </DialogTitle>
-            <Stack direction="row">
+            <Stack direction="row" spacing={2}>
               {menu.image_url ? (
-                <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />  /*Vincent, your problem */
+                <img src={menu.image_url} alt={menu.name} className="w-full h-full min-w-32 object-cover rounded-sm px-6 pr-0" />  /*Vincent, your problem */
               ) : (
                 <div className="w-full h-full bg-red-400" />
               )}
-              <Container className="w-xl">
-                <div className="text-xl font-bold mb-3">{menu.name}</div>
-                <div className="font-medium"><input type="number" value={quantity} className="" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} />x {formatIDR(menu.price)}</div>
+              <Container className="w-xl pl-0 sm:pl-3 text-xs sm:text-base md:text-lg md:pl-5">
+                <div className="font-bold mb-3 ">{menu.name}</div>
+                <div className="font-medium mb-1"><input type="number" value={quantity} className="w-7 md:w-10" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} /> x {formatIDR(menu.price)}</div>
                 <div>Total: {formatIDR(quantity * menu.price)}</div>
               </Container>
             </Stack>
             <DialogActions>
-              <Button onClick={handleClose} variant="outlined" autoFocus>
+              <Button onClick={handleClose} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
                 Kembali
               </Button>
-              <Button onClick={handleConfirm} autoFocus>
+              <Button onClick={handleConfirm} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
                 Tambah
               </Button>
             </DialogActions>
@@ -105,8 +115,7 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token') || ""); // takut ngehapus ini, takutnya ngebreak code, biarin aj kalo kurang clean
-  const { isLoggedIn, getUserPayload } = useAuth();
+  const { isLoggedIn, getUserPayload, getToken } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -128,6 +137,13 @@ export default function HomePage() {
 
   const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
   const [menuQuantity, setQuantity] = useState(1);
+
+  const [menuCount, setMenuCount] = useState(0);
+  const [accessToken, setAccessToken] = useState("");
+
+  useEffect(() => {
+    setAccessToken(getToken() || "");
+  }, [isLoggedIn])
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
@@ -155,8 +171,10 @@ export default function HomePage() {
   }
 
   function handleAddToCart(menu: MenuData) {
-    if (!isLoggedIn) setLoginDialog(true);
-    setCurrentMenu(menu);
+    if (!isLoggedIn) {
+      return setLoginDialog(true);
+    }
+    else return setCurrentMenu(menu);
   }
 
   useEffect(() => setQuantity(1), [currentMenu]);
@@ -188,11 +206,29 @@ export default function HomePage() {
     const menuData = async () => {
       setMenuLoading(true);
       const menus = await fetchMenu(offset, limit, search || undefined);
-      setMenu(menus as MenuResponseData);
+      if (menus &&  (menus as MenuResponseData).data) {
+        setMenu(menus as MenuResponseData)
+      } else {
+        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
+      }
       setMenuLoading(false);
     }
     menuData();
-  }, [offset, limit, search])
+  }, [offset, limit, search]);
+
+  useEffect(() => {
+    async function doProcess() {
+      if (currentMenu == null) {
+        const token = getToken();
+        if (!token) return;
+
+        const response = await fetchCartItems(token);
+        if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
+        // example: SELECT COUNT from database, return those count value as count field
+      }
+    }
+    doProcess();
+  }, [currentMenu, isLoggedIn]);
 
   return (
     <div className="min-h-screen bg-white ">
@@ -218,12 +254,14 @@ export default function HomePage() {
 
         <div>
           {isLoggedIn ? (
-            <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
-                <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-              </svg>
-            </Link>
+            <Badge color="secondary" badgeContent={menuCount}>
+              <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
+                  <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                </svg>
+              </Link>
+            </Badge>
           ) : (
             <Link href="/auth/login" className="px-5 md:px-8 py-2 md:py-2.5 bg-blue-500 text-white rounded-full font-bold text-sm md:text-base hover:bg-blue-600 transition-all shadow-sm active:scale-95">
               Login
@@ -250,12 +288,12 @@ export default function HomePage() {
         (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
         (<>
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {menu!.data.map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+            {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
           </main>
 
           <Pagination
             className="size-fit py-3 mx-auto text-2xl"
-            count={Math.ceil(menu!.count / limit)}
+            count={Math.ceil((menu!.count ?? 0) / limit)}
             onChange={handlePageChange}
             variant="outlined"
             shape="rounded"

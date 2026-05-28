@@ -2,8 +2,10 @@ import Script from "next/script";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ENV } from "@/config/env";
 
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const CLIENT_ID = ENV.GOOGLE_CLIENT_ID;
+const API = ENV.API_URL;
 
 export default function GoogleSignIn() {
     const { login } = useAuth();
@@ -11,7 +13,7 @@ export default function GoogleSignIn() {
     const [, setError] = useState(null); // lupa w, malah define type ala typescript
 
     const handleCredentialResponse = async (response) => {
-        fetch("http://localhost:5000/api/auth/user/google", {
+        fetch(`${API}/auth/user/google`, {
             method: "POST",
             credentials: "include",
             headers: {
