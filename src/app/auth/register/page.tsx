@@ -37,11 +37,11 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
+          username: name,
           email,
           password,
           confirm_password: confirmPassword,
-          phone
+          phone_number: phone
         }),
       });
       alert("Registrasi berhasil! Silakan login.");

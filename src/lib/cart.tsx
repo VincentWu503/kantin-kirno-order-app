@@ -1,8 +1,27 @@
-import { ENV } from "@/config/env";
-import { checkInteger, exists } from "@/utils/checkUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
+import { MenuData } from "@/utils/types";
 import { fetchWrapper } from "@/utils/fetchWrapper";
-import { apiRoute } from "@/utils/fetchUtils";
+
+export async function fetchCartItems(accessToken: string): Promise<unknown | null> { //Unknown, i hate typing in TS (same bruh)
+    if (accessToken == null) return null;
+
+    try {
+        const data = await fetchWrapper('/order/cart', {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        if (data.data) {
+            return data.data;
+        } else {
+            throw new Error("Data tidak dapat diambil");
+        }
+    } catch (err) {
+        console.error("Detailed Error:", err);
+        return false;
+    }
+}
 
 export async function addToCart(menu: MenuData, quantity: number, accessToken: string): Promise<boolean> {
     if (menu == null) return false;
@@ -69,15 +88,32 @@ export async function deleteCartItem(menu: MenuData, accessToken: string) {
     }
 }
 
-export async function fetchCartItems(accessToken: string): Promise<unknown | null> { //Unknown, i hate typing in TS (same bruh)
+export async function fetchAllMenus(accessToken: string): Promise<unknown | null> { //Unknown, i hate typing in TS
     if (accessToken == null) return null;
 
     try {
         const data = await fetchWrapper('/order/cart', {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}` 
-            }
+            headers: { "Authorization": "Bearer " + accessToken }
+        });
+
+        if (data.data) {
+            return data.data;
+        } else {
+            throw new Error("Data tidak dapat diambil");
+        }
+    } catch (err) {
+        console.error("Detailed Error:", err);
+        return false;
+    }
+}
+
+export async function fetchCartPrice(accessToken: string, location: { building: string, floor: string, extra: string } | null): Promise<unknown | null> {
+    if (accessToken == null) return null;
+    let query = '?';
+    if (location !== null) query += "building=" + location.building; //Price fee depends on the building
+    try {
+        const data = await fetchWrapper('/order/cart/price' + query, {
+            headers: { "Authorization": "Bearer " + accessToken },
         });
 
         if (data.data) {

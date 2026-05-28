@@ -22,14 +22,14 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
       </div>
       {/* <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p> */}
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent:'space-between'}}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <span className="text-xs md:text-sm lg:text-base font-medium text-black truncate">{menu.name}</span>
         {
-          menu.is_available ? 
-          <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> : 
-          <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
+          menu.is_available ?
+            <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> :
+            <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
         }
-      </Stack>  
+      </Stack>
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
     <button
@@ -206,10 +206,10 @@ export default function HomePage() {
     const menuData = async () => {
       setMenuLoading(true);
       const menus = await fetchMenu(offset, limit, search || undefined);
-      if (menus &&  (menus as MenuResponseData).data) {
+      if (menus && (menus as MenuResponseData).data) {
         setMenu(menus as MenuResponseData)
       } else {
-        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
+        setMenu({ data: [], count: 0 } as unknown as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
       }
       setMenuLoading(false);
     }
