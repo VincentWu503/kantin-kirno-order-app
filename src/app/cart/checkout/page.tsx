@@ -4,11 +4,12 @@ import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "rea
 import Link from "next/link";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Error } from "@mui/icons-material";
 import { fetchAllMenus, fetchCartPrice } from "@/lib/cart";
-import { fetchUser, refreshAccessToken } from "@/lib/users";
+import { fetchUser } from "@/lib/users";
+import { fetchRestaurantStatus } from "@/lib/restaurant";
 
 function CartItem({ menu }: { menu: MenuData }) {
     return (<div className="grid-cols-2 grid gap-1 h-fit px-2 pt-2">
@@ -60,6 +61,7 @@ export default function CartPage() {
     const [isLoading, setLoading] = useState<boolean>(true);
     const [cart, setCart] = useState<CartResponseData | null>();
     const [totalPrice, setTotalPrice] = useState<number | null>();
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const [accessToken, setAccessToken] = useState("");
 
@@ -80,6 +82,7 @@ export default function CartPage() {
         location: false,
     });
 
+    const cannotOrder = !isOpen || !checked || (takeaway ? false : (error.location || error.phone));
     const [modalShow, setModalShow] = useState<boolean>(false);
 
     useEffect(() => {
@@ -91,6 +94,13 @@ export default function CartPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setError({ ...error, location: location.building.length == 0 || location.floor.length == 0 });
     }, [location])
+
+    useEffect(() => {
+        async function doFunction() {
+            setIsOpen((await fetchRestaurantStatus())!.status);
+        }
+        doFunction();
+    }, [checked, error]);
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -316,12 +326,16 @@ export default function CartPage() {
 
                     {/*Order button*/}
                     <button
-                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${(!checked || (takeaway ? false : (error.location || error.phone))) ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
-                        disabled={(!checked || (takeaway ? false : (error.location || error.phone)))}
+                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${cannotOrder ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
+                        disabled={cannotOrder}
                         onClick={handleButtonClick}
                     >
                         Bayar Pesanan &rarr;
                     </button>
+                    {isOpen ?
+                        <div className="text-center text-green-500">Kantin sedang buka</div> :
+                        <div className="text-center text-red-500">Kantin sedang tutup dan tidak melayani secara online</div>
+                    }
                 </div>
             </div>
 
