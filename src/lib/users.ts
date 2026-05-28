@@ -28,9 +28,9 @@ export async function fetchUser(accessToken: string) {
         });
 
         return result;
-  } catch (err) {
-    throw err;
-  }
+    } catch (err) {
+        throw err;
+    }
 }
 
 export async function authMe(accessToken: string) {

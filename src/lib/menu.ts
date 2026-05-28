@@ -1,7 +1,4 @@
-import { ENV } from "@/config/env";
 import { checkInteger, exists } from "@/utils/checkUtils";
-import { MenuData, MenuResponseData } from "@/utils/types";
-import { fetchWrapper } from "@/utils/fetchWrapper";
 import { apiRoute } from "@/utils/fetchUtils";
 
 export async function fetchMenu(offset: number, limit: number, search?: string) {
