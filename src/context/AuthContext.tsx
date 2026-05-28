@@ -115,7 +115,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUserPayload(null);
   };
 
-  const getToken = () => { return token };
+  const getToken = () => {
+    return token
+  };
 
   const getUserPayload = () => {
     return userPayload;

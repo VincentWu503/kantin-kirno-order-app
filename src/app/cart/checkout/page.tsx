@@ -2,15 +2,13 @@
 "use client"
 import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { Checkbox, CircularProgress, FormControl, FormControlLabel, FormGroup, FormLabel, Input, InputLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
-import { CheckBox, Error } from "@mui/icons-material";
+import { Error } from "@mui/icons-material";
 import { fetchAllMenus, fetchCartPrice } from "@/lib/cart";
-import { jwtDecode } from "jwt-decode";
-import { fetchUser } from "@/lib/users";
+import { fetchUser, refreshAccessToken } from "@/lib/users";
 
 function CartItem({ menu }: { menu: MenuData }) {
     return (<div className="grid-cols-2 grid gap-1 h-fit px-2 pt-2">
@@ -23,6 +21,34 @@ function CartItem({ menu }: { menu: MenuData }) {
         </div>
 
     </div>)
+}
+
+function ConfirmModal({ open, handleClose, takeaway, location, notes, price, handleConfirm }: { open: boolean, handleClose: () => void, takeaway: boolean, location: { building: string, floor: string, extra: string }, notes: string, price: number, handleConfirm: (e: never) => void }) {
+    return (
+        <Dialog open={open} onClose={handleClose}>
+            <DialogTitle>
+                Konfirmasi Pemesanan
+            </DialogTitle>
+            <DialogContent>
+                <div className="font-normal">
+                    {takeaway ?
+                        <>Anda mengambil makanan anda di lokasi <b>Kantin Sahera Pak Kirno</b> </> :
+                        <>Lokasi pengiriman: <b>Gedung {location.building} Untar 1 lantai {location.floor}{location.extra.length > 0 ? ` (${location.extra})` : ""}.</b></>
+                    }
+                </div>
+                <div className="mb-2">{notes.length > 0 ? (`Catatan: ${notes}`) : undefined}</div>
+                <div className="font-bold">Anda akan membayar: <span className="text-green-800 font-extrabold">{formatIDR(price)}</span></div>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} variant="outlined" color="error">
+                    Batal
+                </Button>
+                <Button onClick={handleConfirm} variant="contained" autoFocus>
+                    Bayar
+                </Button>
+            </DialogActions>
+        </Dialog>
+    )
 }
 
 export default function CartPage() {
@@ -53,6 +79,8 @@ export default function CartPage() {
         phone: false,
         location: false,
     });
+
+    const [modalShow, setModalShow] = useState<boolean>(false);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -102,6 +130,14 @@ export default function CartPage() {
         setCheck(checked);
     }
 
+    function handleButtonClick(_e: never) {
+        setModalShow(true);
+    }
+
+    function handleButtonConfirm(_e: never) {
+        //TODO: THIS
+    }
+
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -109,6 +145,7 @@ export default function CartPage() {
         setAccessToken(getToken() || "");
 
         async function doProcess() {
+
             //set forms
             const data = ((await fetchUser(accessToken))).data as unknown as any;
             console.log(data);
@@ -220,7 +257,7 @@ export default function CartPage() {
                                 <FormLabel>Catatan untuk penjual</FormLabel>
                                 <TextField
                                     multiline
-                                    label="Catatan untuk pesanan"
+                                    placeholder="Catatan untuk pesanan"
                                     variant="outlined"
                                     value={notes}
                                     onChange={handleNotesChange}
@@ -279,12 +316,25 @@ export default function CartPage() {
 
                     {/*Order button*/}
                     <button
-                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${(!checked || error.location || error.phone) ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
-                        disabled={checked}
+                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${(!checked || (takeaway ? false : (error.location || error.phone))) ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
+                        disabled={(!checked || (takeaway ? false : (error.location || error.phone)))}
+                        onClick={handleButtonClick}
                     >
                         Bayar Pesanan &rarr;
                     </button>
                 </div>
             </div>
-        </div >);
+
+            <ConfirmModal
+                open={modalShow}
+                handleClose={() => setModalShow(false)}
+                location={location}
+                takeaway={takeaway}
+                notes={notes}
+                price={totalPrice!}
+                handleConfirm={handleButtonConfirm}
+            />
+
+        </div >
+    );
 }
