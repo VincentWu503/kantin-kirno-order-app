@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
 import { fetchMenu } from "@/lib/menu";
 import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
-import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
 
@@ -109,7 +109,7 @@ export default function HomePage() {
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
 
   const OFFSET_DEFAULT = 0;
-  const LIMIT_DEFAULT = 12;
+  const LIMIT_DEFAULT = 8;
   const TIMEOUT_MS = 500;
 
 
@@ -147,12 +147,34 @@ export default function HomePage() {
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
-      if (await addToCart(currentMenu, menuQuantity, accessToken)) {
+      if (!accessToken || accessToken.trim() === "") {
+        setSeverity("error");
+        setSnackbarMessage("Sesi Anda telah berakhir! Harap login ulang.");
+        setSnackbar(true);
+        setCurrentMenu(null);
+        return;
+      }
+
+      let status;
+      try {
+        const result = await addToCart(currentMenu, menuQuantity, accessToken);
+        status = result.status;
+      } catch (err: any) {
+        const errData = JSON.parse(err.message);
+
+        status = errData.status;
+      }
+      if (status === 200 || status === 204) {
         setSeverity("success");
         setSnackbarMessage("Menu berhasil dimasukkan!");
       } else {
-        setSeverity("error");
-        setSnackbarMessage("Menu gagal dimasukkan!");
+        if (status === 409) {
+          setSeverity("error");
+          setSnackbarMessage("Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!")
+        } else {
+          setSeverity("error");
+          setSnackbarMessage("Menu gagal dimasukkan!");
+        }
       }
       setSnackbar(true);
     }
@@ -208,9 +230,7 @@ export default function HomePage() {
       const menus = await fetchMenu(offset, limit, search || undefined);
       if (menus &&  (menus as MenuResponseData).data) {
         setMenu(menus as MenuResponseData)
-      } else {
-        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
-      }
+      } 
       setMenuLoading(false);
     }
     menuData();
@@ -223,7 +243,12 @@ export default function HomePage() {
         if (!token) return;
 
         const response = await fetchCartItems(token);
-        if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
+        // if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
+        if (response) {
+          const data = response.data as CartResponseData;
+
+          setMenuCount(data?.items?.length)
+        }
         // example: SELECT COUNT from database, return those count value as count field
       }
     }
@@ -290,6 +315,8 @@ export default function HomePage() {
           <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
             {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
           </main>
+
+          {page >= Math.ceil(menu!.count / limit) && <Divider className="text-xs px-6 mb-2">Anda telah mencapai akhir halaman~</Divider>}
 
           <Pagination
             className="size-fit py-3 mx-auto text-2xl"

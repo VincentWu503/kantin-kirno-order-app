@@ -5,12 +5,33 @@ import { Montserrat } from "next/font/google";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
 import { deleteCartItem, updateCartItem } from "@/lib/cart";
-import { CircularProgress } from "@mui/material";
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
 import { fetchCartItems } from "@/lib/cart";
+import { ResponseObject } from "@/utils/interfaces";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
+
+function DeleteSuccessModal({ open, handleClose, }: { open: boolean, handleClose: () => void, }) {
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>
+        Berhasil menghapus item keranjang!
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Jika berubah pikiran, Anda bisa menambahkan kembali melalui halaman menu.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} variant="outlined" autoFocus>
+          Kembali
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handleChange: (menu: MenuData, quantity: number) => Promise<void>, handleDelete: (menu: MenuData) => Promise<boolean> }) {
     const [currentCount, setCount] = useState<number>(menu.quantity!);
@@ -80,6 +101,7 @@ export default function CartPage() {
 
 
     const [snackbarActive, setSnackbar] = useState<boolean>(false);
+    const [deleteSuccessDialog, setDeleteSuccessDialog] = useState(false);
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -95,8 +117,11 @@ export default function CartPage() {
     async function refreshCart() {
         const accessToken = getToken(); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh 
         if (!accessToken) return;
-        const response = await fetchCartItems(accessToken);
-        if (response != null) setCart((response as CartResponseData));
+        const response = await fetchCartItems(accessToken) as ResponseObject;
+        if (response != null) {
+            const cartData = response.data;
+            setCart((cartData as CartResponseData));
+        } 
     }
     useEffect(() => {
         const token = getToken();
@@ -130,7 +155,9 @@ export default function CartPage() {
         if (!accessToken) return false;
 
         if (menu !== null) {
-            if (await deleteCartItem(menu, accessToken)) {
+            const result = await deleteCartItem(menu, accessToken) as ResponseObject;
+            if (result.status === 204) {
+                setDeleteSuccessDialog(true);
                 await refreshCart()
                 return true
             }
@@ -178,6 +205,8 @@ export default function CartPage() {
                 </div>
             </div>
 
+            <DeleteSuccessModal handleClose={() => setDeleteSuccessDialog(false)} open={deleteSuccessDialog} />
+
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
                 <Link href="/cart/takeaway" className="flex-1">
@@ -191,5 +220,7 @@ export default function CartPage() {
                     </button>
                 </Link>
             </div>
-        </div>);
+        </div>
+            
+    );
 }

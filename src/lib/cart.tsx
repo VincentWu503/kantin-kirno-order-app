@@ -3,12 +3,11 @@ import { checkInteger, exists } from "@/utils/checkUtils";
 import { MenuData, MenuResponseData } from "@/utils/types";
 import { fetchWrapper } from "@/utils/fetchWrapper";
 import { apiRoute } from "@/utils/fetchUtils";
+import { ResponseObject } from "@/utils/interfaces";
 
-export async function addToCart(menu: MenuData, quantity: number, accessToken: string): Promise<boolean> {
-    if (menu == null) return false;
-    if (accessToken == null) return false;
+export async function addToCart(menu: MenuData, quantity: number, accessToken: string): Promise<ResponseObject> {
     try {
-        await fetchWrapper("/order/cart", {
+        const result = await fetchWrapper("/order/cart", {
             body: JSON.stringify({
                 menu_id: menu.menu_id,
                 quantity: quantity
@@ -20,18 +19,15 @@ export async function addToCart(menu: MenuData, quantity: number, accessToken: s
             method: "POST",
             credentials: "include"
         })
-        return true;
+        return result;
     } catch (err) {
-        console.error("Allowed Error:", err); // Allowed baby
-        return updateCartItem(menu, quantity, accessToken);
+        throw err;
     }
 }
 
-export async function updateCartItem(menu: MenuData, newQuantity: number, accessToken: string): Promise<boolean> {
-    if (menu == null) return false;
-    if (accessToken == null) return false;
+export async function updateCartItem(menu: MenuData, newQuantity: number, accessToken: string){
     try {
-        await fetchWrapper("/order/cart/" + menu.menu_id, {
+        const result = await fetchWrapper("/order/cart/" + menu.menu_id, {
             body: JSON.stringify({
                 menu_id: menu.menu_id,
                 quantity: newQuantity
@@ -43,10 +39,10 @@ export async function updateCartItem(menu: MenuData, newQuantity: number, access
             method: "PATCH",
             credentials: "include"
         });
-        return true;
+        return result;
     } catch (e) {
         console.error("Detailed Error:", e);
-        return false;
+        throw e;
     }
 }
 
@@ -55,23 +51,21 @@ export async function deleteCartItem(menu: MenuData, accessToken: string) {
     if (accessToken == null) return false;
 
     try {
-        await fetchWrapper('/order/cart/' + menu.menu_id, {
+        const result = await fetchWrapper('/order/cart/' + menu.menu_id, {
             headers: {
                 "Authorization": "Bearer " + accessToken,
             },
             method: "DELETE",
             credentials: "include",
         })
-        return true;
+        return result;
     } catch (e) {
         console.error("Detailed Error:", e);
-        return false;
+        throw e;
     }
 }
 
-export async function fetchCartItems(accessToken: string): Promise<unknown | null> { //Unknown, i hate typing in TS (same bruh)
-    if (accessToken == null) return null;
-
+export async function fetchCartItems(accessToken: string): Promise<ResponseObject> { //Unknown, i hate typing in TS (same bruh)
     try {
         const data = await fetchWrapper('/order/cart', {
             headers: {
@@ -80,13 +74,9 @@ export async function fetchCartItems(accessToken: string): Promise<unknown | nul
             }
         });
 
-        if (data.data) {
-            return data.data;
-        } else {
-            throw new Error("Data tidak dapat diambil");
-        }
+        return data;
     } catch (err) {
         console.error("Detailed Error:", err);
-        return false;
+        throw err;
     }
 }

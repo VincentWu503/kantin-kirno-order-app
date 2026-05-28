@@ -4,7 +4,7 @@ import { MenuData, MenuResponseData } from "@/utils/types";
 import { fetchWrapper } from "@/utils/fetchWrapper";
 import { apiRoute } from "@/utils/fetchUtils";
 
-export async function fetchMenu(offset: number, limit: number, search?: string): Promise<unknown> {
+export async function fetchMenu(offset: number, limit: number, search?: string) {
     checkInteger(offset, 0);
     checkInteger(limit, 0);
 
