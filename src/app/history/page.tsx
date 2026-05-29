@@ -42,7 +42,7 @@ function ItemCard({ nama, harga, image_url }: { nama: string; harga: string; ima
         <div className="flex items-center gap-4">
             <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                 {image_url ? (
-                    <Image src={image_url} alt={nama} fill className="object-cover rounded-xl md:rounded-2xl" />
+                    <Image src={image_url} alt={nama} fill sizes="80px" className="object-cover rounded-xl md:rounded-2xl" />
                 ) : (
                     <div className="w-full h-full bg-red-400" />
                 )}

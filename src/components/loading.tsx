@@ -8,6 +8,8 @@ export default function LoadingScreen() {
           src="https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
           alt="Loading"
           fill
+          loading="eager"
+          sizes="(max-width: 768px) 256px, 256px"
           className="object-contain"
         />
       </div>

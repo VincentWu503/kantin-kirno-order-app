@@ -57,40 +57,45 @@ export default function RegisterPage() {
   };
 
   const handleNameChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-    setName(e.target.value);
-    if (name.length > 32 || name.length < 4) {
+    const newName = e.target.value;
+    setName(newName);
+    if (newName.length > 32 || newName.length < 4) {
       setValidity({ ...validity, username: false });
     } else {
       setValidity({ ...validity, username: true });
     }
   }
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (!email.includes('@')) {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (!newEmail.includes('@')) {
       setValidity({ ...validity, email: false });
     } else {
       setValidity({ ...validity, email: true });
     }
   }
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-    setPhone(e.target.value);
-    if (phone.length >= 11) {
+    const newPhone = e.target.value;
+    setPhone(newPhone);
+    if (newPhone.length >= 11) {
       setValidity({ ...validity, phone: true });
     } else {
       setValidity({ ...validity, phone: false });
     }
   }
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-    setPassword(e.target.value);
-    if (PW_REGEX.test(password)) {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    if (PW_REGEX.test(newPassword)) {
       setValidity({ ...validity, password: true });
     } else {
       setValidity({ ...validity, password: false });
     }
   }
   const handleConfirmChange = (e: ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-    setConfirmPassword(e.target.value);
-    if (confirmPassword === password) {
+    const newConfirmPassword = e.target.value;
+    setConfirmPassword(newConfirmPassword);
+    if (newConfirmPassword === password) {
       setValidity({ ...validity, confirm: true });
     } else {
       setValidity({ ...validity, confirm: false });
@@ -174,7 +179,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-2xl font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-2xl font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95 text-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Mendaftar..." : "Daftar"}
           </button>

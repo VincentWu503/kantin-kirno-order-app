@@ -12,15 +12,14 @@ import { fetchUser } from "@/lib/users";
 import { fetchRestaurantStatus } from "@/lib/restaurant";
 
 function CartItem({ menu }: { menu: MenuData }) {
-    return (<div className="grid-cols-2 grid gap-1 h-fit px-2 pt-2">
+    return (<div className="grid grid-cols-3 gap-2 h-fit px-2 py-2 border-b">
         <div className="col-span-1">
-            <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} /> {/* VINCENT FIX THIS!!! */}
+            <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} className="w-full h-auto object-cover rounded" />
         </div>
-        <div className="col-span-1 flex flex-col">
-            <div className="h-auto">{menu.name}</div>
-            <div className="text-right text-gray-400"><b className="text-black">{formatIDR(menu.price)} &#215; {menu.quantity}</b></div>
+        <div className="col-span-2 flex flex-col justify-between">
+            <div className="font-medium text-sm md:text-base line-clamp-2">{menu.name}</div>
+            <div className="text-right text-gray-600 text-sm"><b className="text-black">{formatIDR(menu.price)} &#215; {menu.quantity}</b></div>
         </div>
-
     </div>)
 }
 
@@ -60,7 +59,7 @@ export default function CartPage() {
 
     const [isLoading, setLoading] = useState<boolean>(true);
     const [cart, setCart] = useState<CartResponseData | null>();
-    const [totalPrice, setTotalPrice] = useState<number | null>();
+    const [totalPrice, setTotalPrice] = useState<number>(0);
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const [accessToken, setAccessToken] = useState("");
@@ -100,7 +99,19 @@ export default function CartPage() {
             setIsOpen((await fetchRestaurantStatus())!.status);
         }
         doFunction();
-    }, [checked, error]);
+    }, []);
+
+    useEffect(() => {
+        async function updatePrice() {
+            if (!takeaway) {
+                const priceResponse = await fetchCartPrice(accessToken, location);
+                if (priceResponse != null) setTotalPrice((priceResponse as { price: number }).price);
+            } else {
+                setTotalPrice(countMenuPriceTotal());
+            }
+        }
+        updatePrice();
+    }, [location, takeaway, accessToken]);
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -134,6 +145,10 @@ export default function CartPage() {
     }
     function handleNotesChange(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setNotes(e.target.value);
+    }
+
+    function handleNameChange(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+        setName(e.target.value.slice(0, 34));
     }
 
     function handleCheckChange(e: SyntheticEvent<Element, Event>, checked: boolean) {
@@ -177,14 +192,14 @@ export default function CartPage() {
 
 
     if (isLoading) return (
-        <div className="min-h-screen min-w-screen flex flex-col justify-center items-center align-middle bg-white p-6 pb-20 font-serif text-black">
+        <div className="min-h-screen min-w-screen flex flex-col justify-center items-center align-middle bg-white p-6 pb-20 text-black">
             <CircularProgress />
             <div>Sedang memuat...</div>
         </div>
     )
 
     return (
-        <div className="min-h-screen bg-white p-6 pb-20 font-serif text-black">
+        <div className="min-h-screen bg-white p-6 pb-20 text-black">
             {/* Tombol back */}
             <div className="mb-4 max-w-7xl mx-auto">
                 <Link href="/" className="inline-block">
@@ -198,42 +213,43 @@ export default function CartPage() {
             <h1 className="text-5xl w-fit md:text-4xl font-bold mb-8 tracking-tight max-w-7xl mx-auto">Checkout</h1>
 
             { /* Left Right split */}
-            <div className="grid grid-cols-3 gap-2 max-w-7xl h-fit mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-7xl h-fit mx-auto">
                 {/* Order details Form*/}
-                <div className="col-span-2 h-fit">
-                    <div className="px-2 py-2 h-fit font-bold text-2xl">Pemesanan</div>
-                    <Paper className="col-span-2 h-fit p-3" elevation={2}>
+                <div className="md:col-span-2 h-fit">
+                    <div className="px-2 py-2 h-fit font-bold text-xl md:text-2xl">Pemesanan</div>
+                    <Paper className="h-fit p-3" elevation={2}>
                         { /* Account Info Needs profile data */}
                         <Stack>
-                            <div className="font-bold text-3xl">Informasi Pembeli</div>
-                            <div className="flex gap-2 m-2 mt-4">
+                            <div className="font-bold text-2xl md:text-3xl">Informasi Pembeli</div>
+                            <div className="flex flex-col sm:flex-row gap-3 m-2 mt-4">
                                 <TextField
                                     variant="outlined"
                                     label="Nama"
-                                    slotProps={{ input: { readOnly: true, disabled: true, className: "h-fit w-fit p-0 bg-gray-200" } }}
                                     value={name}
+                                    onChange={handleNameChange}
                                     size="small"
                                     required
-                                    helperText={
-                                        "Nama profil"
-                                    }
+                                    inputProps={{ maxLength: 34 }}
+                                    helperText={`Nama pembeli (${name.length}/34)`}
+                                    className="flex-1"
                                 />
                                 <TextField
                                     variant="outlined"
                                     label="Nomor Telp (WA)"
-                                    slotProps={{ input: { className: "h-fit w-fit p-0" } }}
                                     value={phone}
                                     size="small"
                                     type="tel"
                                     onChange={handlePhoneChanged}
                                     error={error["phone"]}
                                     required
+                                    helperText={error["phone"] ? "Format nomor tidak valid" : ""}
+                                    className="flex-1"
                                 />
                             </div>
                         </Stack>
 
                         {/*Delivery info */}
-                        <Stack className="gap-2">
+                        <Stack className="gap-2 mt-4">
                             <div className="font-bold text-3xl">Pengiriman</div>
                             <FormControl required>
                                 <FormLabel>Opsi Pengiriman</FormLabel>
@@ -242,7 +258,7 @@ export default function CartPage() {
                                     <FormControlLabel control={<Radio />} value={"takeaway"} label="Ambil di tempat"></FormControlLabel>
                                 </RadioGroup>
                             </FormControl>
-                            <Stack direction="row" className="gap-2">
+                            <Stack direction="row" className="gap-2 flex-wrap">
                                 <FormControl required className="w-fit" error={error.location && !takeaway}>
                                     <FormLabel className="text-center">Gedung</FormLabel>
                                     <Select value={location.building} onChange={handleBuildingChange} disabled={takeaway} className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}>
@@ -278,10 +294,10 @@ export default function CartPage() {
                 </div>
 
                 {/* Order Items and price */}
-                <div className="col-span-1 h-fit flex flex-col">
+                <div className="md:col-span-1 h-fit flex flex-col">
                     {/*Order Items*/}
-                    <div className="px-2 py-2 h-fit font-bold text-2xl">Daftar Makanan</div>
-                    <Paper className="h-fit pb-2" elevation={2} square>
+                    <div className="px-2 py-2 h-fit font-bold text-xl md:text-2xl">Daftar Makanan</div>
+                    <Paper className="h-fit pb-2" elevation={2}>
                         {cart!.items.map((item) =>
                             <CartItem
                                 key={item.menu_id}
@@ -290,52 +306,45 @@ export default function CartPage() {
                     </Paper>
 
                     {/*Cart Price*/}
-                    <div className="px-2 py-2 pt-4 h-fit font-bold text-2xl">Harga Pesanan</div>
+                    <div className="px-2 py-2 pt-4 h-fit font-bold text-xl md:text-2xl">Harga Pesanan</div>
                     <Paper className="h-fit py-2 px-2 flex gap-2 flex-col" elevation={2}>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-sm md:text-base">
                             <span className="block">Biaya Makanan</span>
-                            <span className="block">{formatIDR(countMenuPriceTotal())}</span>
+                            <span className="block font-semibold">{formatIDR(countMenuPriceTotal())}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="block">Biaya Pengiriman</span>
-                            <span className="block">
+                        <div className="flex justify-between text-sm md:text-base">
+                            <span className="flex items-center gap-1">Biaya Pengiriman
                                 <Tooltip
                                     describeChild
-                                    title={
-                                        (
-                                            <>
-                                                Biaya admin dihitung berdasarkan lokasi pengiriman pesanan
-                                            </>
-                                        )
-                                    }>
+                                    title="Biaya admin dihitung berdasarkan lokasi pengiriman pesanan"
+                                >
                                     <Error fontSize="small" color="disabled" />
                                 </Tooltip>
-                                &nbsp;{(totalPrice! - countMenuPriceTotal()) ? formatIDR(totalPrice! - countMenuPriceTotal()) : "Gratis"}
                             </span>
+                            <span className="block font-semibold">{takeaway ? "Gratis" : formatIDR(Math.max(0, totalPrice - countMenuPriceTotal()))}</span>
                         </div>
-                        <div className="flex justify-between font-bold text-2xl pt-2 border-t-[1]">
+                        <div className="flex justify-between font-bold text-lg md:text-2xl pt-2 border-t border-gray-300">
                             <span className="block">Total</span>
-                            <span className="block">{formatIDR(totalPrice!)}</span>
+                            <span className="block text-green-600">{formatIDR(totalPrice)}</span>
                         </div>
                     </Paper>
 
                     {/* I Agree Checkboxes */}
-                    <FormGroup className="h-fit p-2 text-xl font-bold rounded-xl my-4 mx-2">
-                        <FormControlLabel label={<span className="text-blue-900">Saya setuju bahwa data yang saya masukkan sudah sesuai</span>} control={<Checkbox value={checked} onChange={handleCheckChange} />} required />
+                    <FormGroup className="h-fit p-2 text-sm md:text-base font-semibold rounded-xl my-4 mx-2">
+                        <FormControlLabel label={<span className="text-blue-900">Saya setuju bahwa data yang saya masukkan sudah sesuai</span>} control={<Checkbox checked={checked} onChange={handleCheckChange} />} required />
                     </FormGroup>
 
                     {/*Order button*/}
                     <button
-                        className={`transition h-fit p-2 text-2xl font-bold rounded-xl my-4 self-end ${cannotOrder ? "bg-gray-600 text-gray-400" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
+                        className={`transition h-fit p-2 md:p-3 text-lg md:text-2xl font-bold rounded-xl my-4 w-full md:w-auto ${cannotOrder ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
                         disabled={cannotOrder}
                         onClick={handleButtonClick}
                     >
                         Bayar Pesanan &rarr;
                     </button>
-                    {isOpen ?
-                        <div className="text-center text-green-500">Kantin sedang buka</div> :
-                        <div className="text-center text-red-500">Kantin sedang tutup dan tidak melayani secara online</div>
-                    }
+                    <div className={`text-center text-sm md:text-base font-semibold rounded px-2 py-1 ${isOpen ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
+                        {isOpen ? "✓ Kantin sedang buka" : "✗ Kantin sedang tutup dan tidak melayani secara online"}
+                    </div>
                 </div>
             </div>
 

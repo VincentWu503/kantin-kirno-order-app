@@ -6,7 +6,6 @@ import Navbar from "@/components/navbar";
 import LoadingScreen from "@/components/loading";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import Error from "@/app/error";
@@ -17,8 +16,6 @@ import '@fontsource/roboto/700.css';
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "@/theme";
-
-const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500", "700"], variable: '--font-montserrat' });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -51,7 +48,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${montserrat.className} antialiased bg-gray-50 m-0 p-0`}>
+      <body className="antialiased bg-gray-50 m-0 p-0">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
             <ErrorBoundary errorComponent={Error}>

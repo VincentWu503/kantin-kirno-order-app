@@ -208,14 +208,14 @@ export default function CartPage() {
     useEffect(() => { setTotalPrice(countMenuPriceTotal()) }, [cart]);
 
     if (isLoading) return (
-        <div className="min-h-screen min-w-screen flex flex-col justify-center items-center align-middle bg-white p-6 pb-20 font-serif text-black">
+        <div className="min-h-screen min-w-screen flex flex-col justify-center items-center align-middle bg-white p-6 pb-20 text-black">
             <CircularProgress />
             <div>Sedang memuat...</div>
         </div>
     )
 
     return (
-        <div className="min-h-screen bg-white p-6 pb-20 font-serif text-black">
+        <div className="min-h-screen bg-white p-6 pb-20 text-black">
             {/* Tombol back */}
             <div className="mb-4 max-w-7xl mx-auto">
                 <Link href="/" className="inline-block">

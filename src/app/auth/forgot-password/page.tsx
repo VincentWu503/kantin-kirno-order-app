@@ -155,10 +155,9 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="bg-teal-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
-        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2">
-          <span className="text-xs md:text-sm lg:text-base font-bold  text-black">SAHERA PAK KIRNO</span>
+    <div className="min-h-screen flex flex-col text-black">
+      <div className="bg-blue-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
+        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2 mb-6">
         </div>
       </div>
 
@@ -170,7 +169,7 @@ export default function ForgotPasswordPage() {
             step === 2 ? handleVerifyOTP : 
             handleResetPassword
           } 
-          className="bg-teal-100 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto"
+          className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto"
         >
           {/* Back button */}
           <div className="flex items-center gap-2 mb-2">
@@ -184,20 +183,20 @@ export default function ForgotPasswordPage() {
                   router.back();
                 }
               }}
-              className="text-teal-600 hover:opacity-70 transition"
+              className="text-gray-500 hover:opacity-70 transition"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-xs text-teal-600 font-medium">
+            <span className="text-xs text-gray-500 font-medium">
               {step === 1 && "Langkah 1 dari 3"}
               {step === 2 && "Langkah 2 dari 3"}
               {step === 3 && "Langkah 3 dari 3"}
             </span>
           </div>
 
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-teal-700 text-center">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-700 text-center">
             {step === 1 && "Lupa Password"}
             {step === 2 && "Verifikasi OTP"}
             {step === 3 && "Reset Password"}
@@ -214,25 +213,25 @@ export default function ForgotPasswordPage() {
           {step === 1 && (
             <>
               <div>
-                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-teal-700">Email</label>
+                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2">Email</label>
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Masukkan email Anda"
-                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black" 
+                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
                   required
                 />
               </div>
 
-              <p className="text-xs md:text-sm text-teal-700">
+              <p className="text-xs md:text-sm text-gray-500">
                 Masukkan email Anda dan kami akan mengirimkan kode OTP untuk memverifikasi akun
               </p>
 
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full py-2.5 md:py-3 lg:py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 md:py-3 lg:py-4 bg-white hover:bg-gray-50 text-black rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Mengirim..." : "Kirim Kode OTP"}
               </button>
@@ -243,26 +242,26 @@ export default function ForgotPasswordPage() {
           {step === 2 && (
             <>
               <div>
-                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-teal-700">Kode OTP</label>
+                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2">Kode OTP</label>
                 <input 
                   type="text" 
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black text-center tracking-widest font-mono" 
+                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-center tracking-widest font-mono" 
                   required
                 />
               </div>
 
-              <p className="text-xs md:text-sm text-teal-700">
+              <p className="text-xs md:text-sm text-gray-500">
                 Kode OTP telah dikirim ke <span className="font-semibold">{email}</span>
               </p>
 
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full py-2.5 md:py-3 lg:py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 md:py-3 lg:py-4 bg-white hover:bg-gray-50 text-black rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Memverifikasi..." : "Verifikasi OTP"}
               </button>
@@ -271,7 +270,7 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={handleRequestNewOTP}
                 disabled={otpRequestLoading}
-                className="w-full py-2 text-teal-600 hover:text-teal-700 text-sm md:text-base font-semibold underline transition disabled:opacity-50"
+                className="w-full py-2 text-gray-500 hover:text-blue-600 text-sm md:text-base font-semibold underline transition disabled:opacity-50"
               >
                 {otpRequestLoading ? "Mengirim..." : "Kirim Ulang Kode OTP"}
               </button>
@@ -282,25 +281,25 @@ export default function ForgotPasswordPage() {
           {step === 3 && (
             <>
               <div>
-                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-teal-700">Password Baru</label>
+                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2">Password Baru</label>
                 <input 
                   type="password" 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimal 8 karakter"
-                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black" 
+                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2 text-teal-700">Konfirmasi Password</label>
+                <label className="block text-xs md:text-sm lg:text-base font-medium mb-2">Konfirmasi Password</label>
                 <input 
                   type="password" 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Masukkan ulang password"
-                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black" 
+                  className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
                   required
                 />
               </div>
@@ -308,7 +307,7 @@ export default function ForgotPasswordPage() {
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full py-2.5 md:py-3 lg:py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 md:py-3 lg:py-4 bg-white hover:bg-gray-50 text-black rounded-full text-base md:text-lg font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Mereset..." : "Reset Password"}
               </button>
@@ -316,11 +315,11 @@ export default function ForgotPasswordPage() {
           )}
 
           {/* Footer Link */}
-          <p className="text-center text-xs md:text-sm text-teal-700">
+          <p className="text-center text-xs md:text-sm text-gray-500">
             {step === 1 && (
               <>
                 Ingat password Anda? 
-                <Link href="/auth/login" className="hover:text-teal-600 hover:underline text-teal-600 ml-1 font-semibold">
+                <Link href="/auth/login" className="hover:text-blue-600 hover:underline text-gray-500 ml-1 font-semibold">
                   Login
                 </Link>
               </>
@@ -328,7 +327,7 @@ export default function ForgotPasswordPage() {
             {(step === 2 || step === 3) && (
               <>
                 Kembali ke 
-                <button type="button" onClick={() => { setStep(1); setError(""); }} className="hover:text-teal-600 hover:underline text-teal-600 ml-1 font-semibold">
+                <button type="button" onClick={() => { setStep(1); setError(""); }} className="hover:text-blue-600 hover:underline text-gray-500 ml-1 font-semibold">
                   Login
                 </button>
               </>

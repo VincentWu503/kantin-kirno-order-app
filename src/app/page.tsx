@@ -245,13 +245,9 @@ export default function HomePage() {
         if (!token) return;
 
         const response = await fetchCartItems(token);
-        // if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
-        if (response) {
-          const data = response.data as CartResponseData;
-
-          setMenuCount(data?.items?.length)
+        if (response && response.data) {
+          setMenuCount(response.data?.items?.length || 0)
         }
-        // example: SELECT COUNT from database, return those count value as count field
       }
     }
     doProcess();
@@ -268,11 +264,13 @@ export default function HomePage() {
               src={isLoggedIn ? profile.profileUrl : guestImage}
               alt="Profile"
               fill
+              loading="eager"
+              sizes="(max-width: 768px) 40px, 56px"
               className="object-cover"
             />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-sm md:text-xl font-serif font-bold text-black leading-tight">
+            <h1 className="text-sm md:text-xl font-bold text-black leading-tight">
               {isLoggedIn ? `Halo, ${profile.name}` : "Sahera Pak Kirno"}
             </h1>
             {isLoggedIn && <span className="text-[10px] md:text-xs text-gray-500">Selamat Makan!</span>}
@@ -313,22 +311,26 @@ export default function HomePage() {
       {/* Menu Grid */}
       {menuLoading ?
         (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
-        (<>
-          <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
-          </main>
+        (menu && menu.data ? (
+          <>
+            <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
+              {(menu.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+            </main>
 
-          {page >= Math.ceil(menu!.count / limit) && <Divider className="text-xs px-6 mb-2">Anda telah mencapai akhir halaman~</Divider>}
+            {page >= Math.ceil(menu.count / limit) && <Divider className="text-xs px-6 mb-2">Anda telah mencapai akhir halaman~</Divider>}
 
-          <Pagination
-            className="size-fit py-3 mx-auto text-2xl"
-            count={Math.ceil((menu!.count ?? 0) / limit)}
-            onChange={handlePageChange}
-            variant="outlined"
-            shape="rounded"
-            page={page}
-          />
-        </>)
+            <Pagination
+              className="size-fit py-3 mx-auto text-2xl"
+              count={Math.ceil((menu.count ?? 0) / limit)}
+              onChange={handlePageChange}
+              variant="outlined"
+              shape="rounded"
+              page={page}
+            />
+          </>
+        ) : (
+          <div className="text-center py-8 text-gray-500">Tidak ada menu tersedia</div>
+        ))
       }
 
       {/* Popups */}
