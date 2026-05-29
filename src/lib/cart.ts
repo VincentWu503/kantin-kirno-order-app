@@ -1,6 +1,5 @@
 import { MenuData } from "@/utils/types";
 import { fetchWrapper } from "@/utils/fetchWrapper";
-import { apiRoute } from "@/utils/fetchUtils";
 import { ResponseObject } from "@/utils/interfaces";
 
 export async function addToCart(menu: MenuData, quantity: number, accessToken: string): Promise<ResponseObject> {

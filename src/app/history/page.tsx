@@ -74,7 +74,7 @@ function formatTanggal(isoString: string): string {
 
 // code utama layout kek mana
 export default function HistoryPage() {
-    const { isLoggedIn, getUserPayload, getToken } = useAuth();
+    const { isLoggedIn, getUserPayload } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -87,7 +87,8 @@ export default function HistoryPage() {
 
         const loadOrders = async () => {
         try {
-            const token = getToken();
+            // const token = getToken();
+            const token = localStorage.getItem('token');
             if (!token) return;
             
             const payload = getUserPayload() as unknown as { user_id: string } | null;
@@ -95,8 +96,6 @@ export default function HistoryPage() {
                 setLoading(false);
                 return;
             }
-
-            console.log(token);
             
             // const data = await fetchWrapper(`/order/user/${payload.user_id}`, {
             //     method: "GET",

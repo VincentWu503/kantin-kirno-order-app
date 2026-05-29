@@ -8,6 +8,7 @@ import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
 import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
+import BottomSnackbar from "@/components/BottomSnackbar";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -115,7 +116,7 @@ export default function HomePage() {
 
   const [, setError] = useState<Error | null>(null);
 
-  const { isLoggedIn, getUserPayload, getToken } = useAuth();
+  const { isLoggedIn, getUserPayload } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -142,7 +143,8 @@ export default function HomePage() {
   const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
-    setAccessToken(getToken() || "");
+    // stale token problem (auth context masih nyimpan token lama waktu refresh), eksperimen ganti langsung akses localstorage
+    setAccessToken(localStorage.getItem('token') || "");
   }, [isLoggedIn])
 
   async function handleMenuConfirm() {
@@ -239,7 +241,7 @@ export default function HomePage() {
   useEffect(() => {
     async function doProcess() {
       if (currentMenu == null) {
-        const token = getToken();
+        const token = localStorage.getItem('token');
         if (!token) return;
 
         const response = await fetchCartItems(token);
@@ -338,7 +340,7 @@ export default function HomePage() {
         handleConfirm={handleMenuConfirm}
       />
       <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
-      <Snackbar
+      {/* <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbar(false)}
@@ -348,7 +350,14 @@ export default function HomePage() {
         <Alert severity={severity as AlertColor} onClick={() => setSnackbar(false)}>
           {snackbarMessage}
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
+      <BottomSnackbar 
+        open={snackbarOpen} 
+        severity={"success"} 
+        snackbarMessage={snackbarMessage}
+        closeAction={() => setSnackbar(false)}
+      >
+      </BottomSnackbar>
     </div>
   );
 }

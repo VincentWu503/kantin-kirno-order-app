@@ -1,23 +1,27 @@
 "use client"
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
-import { CartResponseData, MenuData } from "@/utils/types";
+import { Montserrat, Noto_Sans_Chakma } from "next/font/google";
+import { CartResponseData, MenuData,  } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { deleteCartItem, updateCartItem } from "@/lib/cart";
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { deleteCartItem, updateCartItem, fetchCartItems } from "@/lib/cart";
+import { AlertColor, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
-import { fetchCartItems } from "@/lib/cart";
 import { ResponseObject } from "@/utils/interfaces";
+import BottomSnackbar from "@/components/BottomSnackbar";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-function DeleteSuccessModal({ open, handleClose, }: { open: boolean, handleClose: () => void, }) {
+function DeleteSuccessModal({ open, handleClose, handleConfirm }: { 
+    open: boolean, 
+    handleClose: () => void, 
+    handleConfirm: () => Promise<boolean>
+}) {
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>
-        Berhasil menghapus item keranjang!
+        Apakah Anda yakin ingin menghapus item keranjang ini?
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -28,12 +32,19 @@ function DeleteSuccessModal({ open, handleClose, }: { open: boolean, handleClose
         <Button onClick={handleClose} variant="outlined" autoFocus>
           Kembali
         </Button>
+        <Button onClick={handleConfirm} variant="outlined" autoFocus>
+          Hapus
+        </Button>
       </DialogActions>
     </Dialog>
   )
 }
 
-function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handleChange: (menu: MenuData, quantity: number) => Promise<void>, handleDelete: (menu: MenuData) => Promise<boolean> }) {
+function CartCard({ menu, handleChange, handleDelete }: { 
+    menu: MenuData, 
+    handleChange: (menu: MenuData, quantity: number) => Promise<void>, 
+    handleDelete: (menu: MenuData) => void
+}) {
     const [currentCount, setCount] = useState<number>(menu.quantity!);
     const [updateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -52,7 +63,7 @@ function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handle
 
     return (<div className="border border-black/4 bg-white rounded-lg p-4 h-fit shadow-md grid grid-cols-3 gap-2">
         <div className="col-span-1">
-            <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} /> {/* VINCENT FIX THIS!!! */}
+            <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} />
         </div>
         <div className="flex flex-col items-start gap-3 col-span-2">
             <div className="md:text-2xl font-medium text-sm">{menu.name}</div>
@@ -91,17 +102,19 @@ function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handle
 }
 
 export default function CartPage() {
-
-    const { isLoggedIn, getUserPayload, getToken } = useAuth();
-
+    // auth
+    const { isLoggedIn, getUserPayload } = useAuth();
     const [isLoading, setLoading] = useState<boolean>(true);
+
     const [cart, setCart] = useState<CartResponseData | null>();
     const [totalPrice, setTotalPrice] = useState<number | null>();
     const [priceUpdateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
 
-
+    // pesan hasil aksi dan konfirmasi delete
     const [snackbarActive, setSnackbar] = useState<boolean>(false);
-    const [deleteSuccessDialog, setDeleteSuccessDialog] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState<string>("success");
+    const [deleteItem, setDeleteItem] = useState<MenuData | null>(null);
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -115,7 +128,8 @@ export default function CartPage() {
     }
 
     async function refreshCart() {
-        const accessToken = getToken(); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh 
+        // stale token problem, eksperiment ganti langsung akses localstorage
+        const accessToken = localStorage.getItem('token'); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh (idk why this happened before tbh)
         if (!accessToken) return;
         const response = await fetchCartItems(accessToken) as ResponseObject;
         if (response != null) {
@@ -124,8 +138,11 @@ export default function CartPage() {
         } 
     }
     useEffect(() => {
-        const token = getToken();
-        if (!token) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
+        };
         async function doProcess() {
             setLoading(true);
             await refreshCart();
@@ -135,7 +152,7 @@ export default function CartPage() {
     }, [isLoggedIn]);
 
     async function handleMenuChangeQuantity(menu: MenuData, quantity: number): Promise<void> {
-        const accessToken = getToken();
+        const accessToken = localStorage.getItem('token');
         if (!accessToken) return;
         if (menu !== null && quantity != 0) { //Basic check
             if (await updateCartItem(menu!, quantity, accessToken)) {
@@ -151,13 +168,12 @@ export default function CartPage() {
     }
 
     async function handleMenuDelete(menu: MenuData): Promise<boolean> {
-        const accessToken = getToken();
-        if (!accessToken) return false;
+        const accessToken = localStorage.getItem('token');
+        if (!accessToken || !menu) return false;
 
         if (menu !== null) {
             const result = await deleteCartItem(menu, accessToken) as ResponseObject;
             if (result.status === 204) {
-                setDeleteSuccessDialog(true);
                 await refreshCart()
                 return true
             }
@@ -194,7 +210,11 @@ export default function CartPage() {
                         key={item.menu_id}
                         menu={item}
                         handleChange={handleMenuChangeQuantity}
-                        handleDelete={handleMenuDelete}
+                        handleDelete={() => {
+                            const token = localStorage.getItem('token');
+                            if (!token) return;
+                            setDeleteItem(item!)
+                        }}
                     />)}
             </div>
 
@@ -205,7 +225,34 @@ export default function CartPage() {
                 </div>
             </div>
 
-            <DeleteSuccessModal handleClose={() => setDeleteSuccessDialog(false)} open={deleteSuccessDialog} />
+            <DeleteSuccessModal 
+                open={deleteItem !== null} 
+                handleClose={() => setDeleteItem(null)} 
+                handleConfirm={async () => {
+                    const result = await handleMenuDelete(deleteItem!);
+                    if (!result) {
+                        setSnackbarMessage("Gagal menghapus item keranjang!")
+                        setSnackbarSeverity("error");
+                        setSnackbar(true);
+                        setDeleteItem(null);
+                        return false;
+                    }
+                    setSnackbarMessage("Item keranjang telah berhasil dihapus!")
+                    setSnackbarSeverity("success");
+                    setSnackbar(true);
+                    setDeleteItem(null);
+                    return result;
+                }}
+            />
+
+            {/* Snackbar */}
+            <BottomSnackbar 
+                open={snackbarActive} 
+                severity={snackbarSeverity as AlertColor} 
+                snackbarMessage={snackbarMessage}
+                closeAction={() => setSnackbar(false)}
+            >
+            </BottomSnackbar>
 
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">

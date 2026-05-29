@@ -25,7 +25,19 @@ let refreshPromise: Promise<string | null> | null = null;
  * @throws {Error} Throws an error if refresh token failed, or request failed.
  */
 export async function fetchWrapper(endpoint: string, options: RequestInit = {}): Promise<ResponseObject> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    if (refreshPromise) {
+        try {
+            const waitedToken = await refreshPromise;
+            if (waitedToken) token = waitedToken;
+        } catch (error) {
+            throw new Error(JSON.stringify({
+                statusCode: 401,
+                message: "Sesi Anda telah berakhir! Harap login ulang."
+            }));
+        }
+    }
 
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
