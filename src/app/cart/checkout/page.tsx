@@ -4,7 +4,7 @@ import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "rea
 import Link from "next/link";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Error } from "@mui/icons-material";
 import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
@@ -148,7 +148,7 @@ export default function CartPage() {
     }
 
     function handleNameChange(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
-        setName(e.target.value.slice(0, 34));
+        setName(e.target.value.slice(0, 32));
     }
 
     function handleCheckChange(e: SyntheticEvent<Element, Event>, checked: boolean) {
@@ -217,7 +217,7 @@ export default function CartPage() {
                 {/* Order details Form*/}
                 <div className="md:col-span-2 h-fit">
                     <div className="px-2 py-2 h-fit font-bold text-xl md:text-2xl">Pemesanan</div>
-                    <Paper className="h-fit p-3" elevation={2}>
+                    <div className="border border-black/4 bg-white rounded-lg p-4 h-fit shadow-md">
                         { /* Account Info Needs profile data */}
                         <Stack>
                             <div className="font-bold text-2xl md:text-3xl">Informasi Pembeli</div>
@@ -229,8 +229,8 @@ export default function CartPage() {
                                     onChange={handleNameChange}
                                     size="small"
                                     required
-                                    inputProps={{ maxLength: 34 }}
-                                    helperText={`Nama pembeli (${name.length}/34)`}
+                                    inputProps={{ maxLength: 32 }}
+                                    helperText={`Nama pembeli (${name.length}/32)`}
                                     className="flex-1"
                                 />
                                 <TextField
@@ -290,24 +290,24 @@ export default function CartPage() {
                                 />
                             </FormControl>
                         </Stack>
-                    </Paper>
+                    </div>
                 </div>
 
                 {/* Order Items and price */}
                 <div className="md:col-span-1 h-fit flex flex-col">
                     {/*Order Items*/}
                     <div className="px-2 py-2 h-fit font-bold text-xl md:text-2xl">Daftar Makanan</div>
-                    <Paper className="h-fit pb-2" elevation={2}>
+                    <div className="border border-black/4 bg-white rounded-lg p-2 h-fit shadow-md">
                         {cart!.items.map((item) =>
                             <CartItem
                                 key={item.menu_id}
                                 menu={item}
                             />)}
-                    </Paper>
+                    </div>
 
                     {/*Cart Price*/}
                     <div className="px-2 py-2 pt-4 h-fit font-bold text-xl md:text-2xl">Harga Pesanan</div>
-                    <Paper className="h-fit py-2 px-2 flex gap-2 flex-col" elevation={2}>
+                    <div className="border border-black/4 bg-white rounded-lg p-4 h-fit shadow-md flex gap-2 flex-col">
                         <div className="flex justify-between text-sm md:text-base">
                             <span className="block">Biaya Makanan</span>
                             <span className="block font-semibold">{formatIDR(countMenuPriceTotal())}</span>
@@ -327,7 +327,7 @@ export default function CartPage() {
                             <span className="block">Total</span>
                             <span className="block text-green-600">{formatIDR(totalPrice)}</span>
                         </div>
-                    </Paper>
+                    </div>
 
                     {/* I Agree Checkboxes */}
                     <FormGroup className="h-fit p-2 text-sm md:text-base font-semibold rounded-xl my-4 mx-2">
@@ -336,7 +336,7 @@ export default function CartPage() {
 
                     {/*Order button*/}
                     <button
-                        className={`transition h-fit p-2 md:p-3 text-lg md:text-2xl font-bold rounded-xl my-4 w-full md:w-auto ${cannotOrder ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-green-400 text-white hover:bg-green-500 active:bg-green-600"}`}
+                        className={`transition h-fit py-2 px-4 md:py-3 md:px-6 text-lg md:text-3xl font-bold rounded-full my-4 w-full md:w-auto ${cannotOrder ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-green-600 text-white hover:bg-green-400 active:bg-green-700"}`}
                         disabled={cannotOrder}
                         onClick={handleButtonClick}
                     >
