@@ -1,9 +1,9 @@
 "use client";
-import React from "react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchWrapper } from "@/utils/fetchWrapper";
 import Image from "next/image";
+import { fetchCompletedOrders } from "@/lib/order";
 
 // vin or siapa pun tolong jangan hapus comment gw. gw udh pusing bacac code seniri jadi gw kasih tanda, so dont touch it.
 // data place holder ( jo minta ada 1 pas blm login)
@@ -74,7 +74,7 @@ function formatTanggal(isoString: string): string {
 
 // code utama layout kek mana
 export default function HistoryPage() {
-    const { isLoggedIn, getUserPayload } = useAuth();
+    const { isLoggedIn, getUserPayload, getToken } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -87,16 +87,26 @@ export default function HistoryPage() {
 
         const loadOrders = async () => {
         try {
+            const token = getToken();
+            if (!token) return;
+            
             const payload = getUserPayload() as unknown as { user_id: string } | null;
             if (!payload) {
-            setLoading(false);
-            return;
+                setLoading(false);
+                return;
             }
+
+            console.log(token);
             
-            const data = await fetchWrapper(`/order/user/${payload.user_id}`, {
-            method: "GET",
-            credentials: "include",
-            }) as { orders?: Order[] };
+            // const data = await fetchWrapper(`/order/user/${payload.user_id}`, {
+            //     method: "GET",
+            //     credentials: "include",
+            //     headers: {
+            //         'Authorization': `Bearer ${token}`
+            //     }
+            // }) as { orders?: Order[] };
+
+            const data = await fetchCompletedOrders(payload.user_id, token) as {orders?: Order[]};
 
             const rawOrders = data.orders ?? [];
 
@@ -224,3 +234,4 @@ export default function HistoryPage() {
         </div>
     );
 }
+

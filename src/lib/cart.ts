@@ -69,14 +69,10 @@ export async function fetchCartItems(accessToken: string): Promise<ResponseObjec
             headers: { "Authorization": "Bearer " + accessToken }
         });
 
-        if (data.data) {
-            return data.data;
-        } else {
-            throw new Error("Data tidak dapat diambil");
-        }
+        return data;
     } catch (err) {
         console.error("Detailed Error:", err);
-        return false;
+        throw err;
     }
 }
 
