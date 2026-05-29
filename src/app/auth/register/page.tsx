@@ -7,7 +7,7 @@ import ErrorDialog from "@/components/ErrorDialog";
 
 export default function RegisterPage() {
 
-  const PW_REGEX = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#@$!%*?&])[A-Za-z\\d#@$!%*?&]{3,30}$');
+  const PW_REGEX = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#@$!%*?&])[A-Za-z\\d#@$!%*?&]{12,30}$');
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [errorMessage, setErrorMessage] = useState("Error: Terjadi kesalahan dengan data registrasi atau email sudah pernah digunakan sebelumnya");
   const [openDialog, setOpen] = useState(false);
 
   const [validity, setValidity] = useState<{ username: boolean, email: boolean, password: boolean, confirm: boolean, phone: boolean }>({ username: true, email: true, password: true, confirm: true, phone: true });
@@ -47,8 +48,14 @@ export default function RegisterPage() {
       alert("Registrasi berhasil! Silakan login.");
       router.push("/auth/login");
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Detail Error:", err);
+      try {
+        const errorData = JSON.parse(err.message);
+        setErrorMessage(errorData.message || "Terjadi kesalahan dengan data registrasi!");
+      } catch {
+        setErrorMessage(err.message || "Terjadi kesalahan dengan data registrasi!");
+      }
       setError(err as Error);
       setOpen(true);
     } finally {
@@ -105,10 +112,9 @@ export default function RegisterPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col text-black">
       <div className="bg-blue-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
-        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2">
-          <span className="text-xs md:text-sm lg:text-base font-bold text-black">SAHERA PAK KIRNO</span>
+        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2 mb-6">
         </div>
       </div>
 
@@ -197,7 +203,7 @@ export default function RegisterPage() {
         openState={openDialog}
         handleClose={handleCloseDialog}
         title="Registrasi Pengguna Gagal!"
-        message="Error: Terjadi kesalahan dengan data regsitrasi atau email sudah pernah digunakan sebelumnya"
+        message={errorMessage}
       />
     </div >
   );
