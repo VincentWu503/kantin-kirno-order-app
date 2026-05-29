@@ -1,23 +1,27 @@
 "use client"
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
-import { CartResponseData, MenuData } from "@/utils/types";
+import { Montserrat, Noto_Sans_Chakma } from "next/font/google";
+import { CartResponseData, MenuData,  } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { deleteCartItem, updateCartItem } from "@/lib/cart";
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { deleteCartItem, updateCartItem, fetchCartItems } from "@/lib/cart";
+import { AlertColor, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
-import { fetchCartItems } from "@/lib/cart";
 import { ResponseObject } from "@/utils/interfaces";
+import BottomSnackbar from "@/components/BottomSnackbar";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-function DeleteSuccessModal({ open, handleClose, }: { open: boolean, handleClose: () => void, }) {
+function DeleteSuccessModal({ open, handleClose, handleConfirm }: { 
+    open: boolean, 
+    handleClose: () => void, 
+    handleConfirm: () => Promise<boolean>
+}) {
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>
-        Berhasil menghapus item keranjang!
+        Apakah Anda yakin ingin menghapus item keranjang ini?
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -28,12 +32,19 @@ function DeleteSuccessModal({ open, handleClose, }: { open: boolean, handleClose
         <Button onClick={handleClose} variant="outlined" autoFocus>
           Kembali
         </Button>
+        <Button onClick={handleConfirm} variant="outlined" autoFocus>
+          Hapus
+        </Button>
       </DialogActions>
     </Dialog>
   )
 }
 
-function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handleChange: (menu: MenuData, quantity: number) => Promise<void>, handleDelete: (menu: MenuData) => Promise<boolean> }) {
+function CartCard({ menu, handleChange, handleDelete }: { 
+    menu: MenuData, 
+    handleChange: (menu: MenuData, quantity: number) => Promise<void>, 
+    handleDelete: (menu: MenuData) => void
+}) {
     const [currentCount, setCount] = useState<number>(menu.quantity!);
     const [updateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -50,58 +61,84 @@ function CartCard({ menu, handleChange, handleDelete }: { menu: MenuData, handle
     }, [currentCount]);
 
 
-    return (<div className="border border-black/4 bg-white rounded-lg p-4 h-fit shadow-md grid grid-cols-3 gap-2">
-        <div className="col-span-1">
-            <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} /> {/* VINCENT FIX THIS!!! */}
+    return (
+    <div className="border border-black/4 bg-white rounded-lg p-4 h-full shadow-md grid grid-cols-3 gap-2">
+        <div className="col-span-1 h-full">
+            <img 
+                src={menu.image_url ? menu.image_url : ""} 
+                alt={"Image:" + menu.name} 
+                className="w-full h-full object-cover rounded-md"
+            />
         </div>
-        <div className="flex flex-col items-start gap-3 col-span-2">
-            <div className="md:text-2xl font-medium text-sm">{menu.name}</div>
-            <div className="md:text-1xl font-medium text-sm">Unit: {formatIDR(menu.price)}</div>
-            <div className="flex align-middle gap-1 md:gap-2">
-                <button className="focus:outline-none" onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5">
-                        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clipRule="evenodd" />
-                    </svg>
+
+        <div className="col-span-2 flex flex-col justify-between pl-3 md:pl-6 lg:pl-9">
+            <div className="flex justify-between items-start">
+                <div className="md:text-2xl font-medium text-sm pr-2">
+                    {menu.name}
+                </div>
+                <button
+                    className="self-start flex-shrink-0 focus:outline-none"
+                    onClick={() => handleDelete(menu)}
+                >
+                    <Delete />
                 </button>
-                <input
-                    type="number"
-                    className="w-8 text-center appearance-none"
-                    min={1}
-                    max={100}
-                    value={currentCount}
-                    step={1}
-                    onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
-                />
-                <button className="focus:outline-none" onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5" >
-                        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
-                    </svg>
-                </button>
-                {isLoading ? <CircularProgress color="info" className="ml-2" size={"2rem"} /> : undefined}
             </div>
-            <div className="text-green-900 font-bold md:text-2xl md:border-t-2 md:px-2 md:pt-2 inline">{formatIDR(menu.price * currentCount)}</div>
-            <button
-                className="self-end border-2 border-red-500 hover:bg-red-200 focus:bg-red-800 transition p-2 rounded-xl block"
-                onClick={() => handleDelete(menu)}
-            >
-                <Delete color="error" />
-            </button>
+
+            <div className="text-green-900 font-bold md:text-2xl md:pt-2">
+                {formatIDR(menu.price * currentCount)}
+            </div>
+
+            <div className="flex justify-between items-end">
+                <div className="md:text-lg font-medium text-sm text-gray-600 mt-1 truncate">
+                    {formatIDR(menu.price)} / porsi
+                </div>
+                <div className="flex items-center gap-1 md:gap-2">
+                    <button 
+                        className="focus:outline-none" 
+                        onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5">
+                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                    <input
+                        type="number"
+                        className="w-8 text-center appearance-none"
+                        min={1}
+                        max={100}
+                        value={currentCount}
+                        step={1}
+                        onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
+                    />
+                    <button 
+                        className="focus:outline-none" 
+                        onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5" >
+                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>)
+    </div>
+    )
 }
 
 export default function CartPage() {
-
-    const { isLoggedIn, getUserPayload, getToken } = useAuth();
-
+    // auth
+    const { isLoggedIn, getUserPayload } = useAuth();
     const [isLoading, setLoading] = useState<boolean>(true);
+
     const [cart, setCart] = useState<CartResponseData | null>();
     const [totalPrice, setTotalPrice] = useState<number | null>();
     const [priceUpdateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
 
-
+    // pesan hasil aksi dan konfirmasi delete
     const [snackbarActive, setSnackbar] = useState<boolean>(false);
-    const [deleteSuccessDialog, setDeleteSuccessDialog] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState<string>("success");
+    const [deleteItem, setDeleteItem] = useState<MenuData | null>(null);
 
     function countMenuPriceTotal() {
         if (cart) {
@@ -115,7 +152,8 @@ export default function CartPage() {
     }
 
     async function refreshCart() {
-        const accessToken = getToken(); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh 
+        // stale token problem, eksperiment ganti langsung akses localstorage
+        const accessToken = localStorage.getItem('token'); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh (idk why this happened before tbh)
         if (!accessToken) return;
         const response = await fetchCartItems(accessToken) as ResponseObject;
         if (response != null) {
@@ -124,8 +162,11 @@ export default function CartPage() {
         } 
     }
     useEffect(() => {
-        const token = getToken();
-        if (!token) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
+        };
         async function doProcess() {
             setLoading(true);
             await refreshCart();
@@ -135,7 +176,7 @@ export default function CartPage() {
     }, [isLoggedIn]);
 
     async function handleMenuChangeQuantity(menu: MenuData, quantity: number): Promise<void> {
-        const accessToken = getToken();
+        const accessToken = localStorage.getItem('token');
         if (!accessToken) return;
         if (menu !== null && quantity != 0) { //Basic check
             if (await updateCartItem(menu!, quantity, accessToken)) {
@@ -151,13 +192,12 @@ export default function CartPage() {
     }
 
     async function handleMenuDelete(menu: MenuData): Promise<boolean> {
-        const accessToken = getToken();
-        if (!accessToken) return false;
+        const accessToken = localStorage.getItem('token');
+        if (!accessToken || !menu) return false;
 
         if (menu !== null) {
             const result = await deleteCartItem(menu, accessToken) as ResponseObject;
             if (result.status === 204) {
-                setDeleteSuccessDialog(true);
                 await refreshCart()
                 return true
             }
@@ -194,7 +234,11 @@ export default function CartPage() {
                         key={item.menu_id}
                         menu={item}
                         handleChange={handleMenuChangeQuantity}
-                        handleDelete={handleMenuDelete}
+                        handleDelete={() => {
+                            const token = localStorage.getItem('token');
+                            if (!token) return;
+                            setDeleteItem(item!)
+                        }}
                     />)}
             </div>
 
@@ -205,16 +249,49 @@ export default function CartPage() {
                 </div>
             </div>
 
-            <DeleteSuccessModal handleClose={() => setDeleteSuccessDialog(false)} open={deleteSuccessDialog} />
+            <DeleteSuccessModal 
+                open={deleteItem !== null} 
+                handleClose={() => setDeleteItem(null)} 
+                handleConfirm={async () => {
+                    const result = await handleMenuDelete(deleteItem!);
+                    if (!result) {
+                        setSnackbarMessage("Gagal menghapus item keranjang!")
+                        setSnackbarSeverity("error");
+                        setSnackbar(true);
+                        setDeleteItem(null);
+                        return false;
+                    }
+                    setSnackbarMessage("Item keranjang telah berhasil dihapus!")
+                    setSnackbarSeverity("success");
+                    setSnackbar(true);
+                    setDeleteItem(null);
+                    return result;
+                }}
+            />
+
+            {/* Snackbar */}
+            <BottomSnackbar 
+                open={snackbarActive} 
+                severity={snackbarSeverity as AlertColor} 
+                snackbarMessage={snackbarMessage}
+                closeAction={() => setSnackbar(false)}
+            >
+            </BottomSnackbar>
 
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
                 <Link href="/cart/checkout" className="flex-1">
-                    <button className={`${montserrat.className} w-full border-green-400 border-2 text-green-400 py-7 rounded-2xl text-5xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                    <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
                         Checkout
                     </button>
                 </Link>
             </div>
+            {/* <Button 
+                variant="contained" 
+                className={`${montserrat.className} bg-green-600 text-2xl rounded-full`}
+                >
+                Checkout
+            </Button> */}
         </div>
             
     );

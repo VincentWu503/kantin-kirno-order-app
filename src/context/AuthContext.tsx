@@ -13,7 +13,7 @@ const AuthContext = createContext<{
   setIsNavigating: (value: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
-  getToken: () => string | null;
+  // getToken: () => string | null;
   getUserPayload: () => any;
 }>({
   isLoggedIn: false,
@@ -22,7 +22,7 @@ const AuthContext = createContext<{
   setIsNavigating: () => { },
   login: () => { },
   logout: () => { },
-  getToken: () => null,
+  // getToken: () => null,
   getUserPayload: () => { }
 });
 
@@ -115,16 +115,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUserPayload(null);
   };
 
-  const getToken = () => {
-    return token
-  };
-
   const getUserPayload = () => {
     return userPayload;
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, getToken, getUserPayload }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, getUserPayload }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,5 @@
 import { MenuData } from "@/utils/types";
 import { fetchWrapper } from "@/utils/fetchWrapper";
-import { apiRoute } from "@/utils/fetchUtils";
 import { ResponseObject } from "@/utils/interfaces";
 
 export async function addToCart(menu: MenuData, quantity: number, accessToken: string): Promise<ResponseObject> {
@@ -69,14 +68,10 @@ export async function fetchCartItems(accessToken: string): Promise<ResponseObjec
             headers: { "Authorization": "Bearer " + accessToken }
         });
 
-        if (data.data) {
-            return data.data;
-        } else {
-            throw new Error("Data tidak dapat diambil");
-        }
+        return data;
     } catch (err) {
         console.error("Detailed Error:", err);
-        return false;
+        throw err;
     }
 }
 

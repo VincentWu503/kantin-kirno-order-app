@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Paper, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Error } from "@mui/icons-material";
-import { fetchAllMenus, fetchCartPrice } from "@/lib/cart";
+import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
 import { fetchUser } from "@/lib/users";
 import { fetchRestaurantStatus } from "@/lib/restaurant";
 
@@ -56,7 +56,7 @@ export default function CartPage() {
 
     const PHONE_REGEX = new RegExp('^(\\+62|62|0)[8123456789][0-9]{8,13}$');
 
-    const { isLoggedIn, getUserPayload, getToken } = useAuth();
+    const { isLoggedIn, getUserPayload } = useAuth();
 
     const [isLoading, setLoading] = useState<boolean>(true);
     const [cart, setCart] = useState<CartResponseData | null>();
@@ -152,7 +152,7 @@ export default function CartPage() {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
-        setAccessToken(getToken() || "");
+        setAccessToken(localStorage.getItem('token') || "");
 
         async function doProcess() {
 
@@ -164,8 +164,8 @@ export default function CartPage() {
 
 
             //set cart
-            const response = await fetchAllMenus(accessToken);
-            if (response != null) setCart((response as CartResponseData));
+            const response = await fetchCartItems(accessToken);
+            if (response != null) setCart((response.data as CartResponseData));
 
             //set price total
             const priceResponse = await fetchCartPrice(accessToken, location);
