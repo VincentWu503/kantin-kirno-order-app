@@ -4,7 +4,7 @@ import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "rea
 import Link from "next/link";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
-import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { Error, SubdirectoryArrowLeftOutlined } from "@mui/icons-material";
 import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
@@ -29,7 +29,7 @@ enum BuildingTypes {
 }
 
 function CartItem({ menu }: { menu: MenuData }) {
-    return (<div className="grid grid-cols-3 gap-2 h-fit px-2 py-2 border-b">
+    return (<div className="grid grid-cols-3 gap-2 h-fit px-2 py-2">
         <div className="col-span-1">
             <img src={menu.image_url ? menu.image_url : ""} alt={"Image:" + menu.name} className="w-full h-auto object-cover rounded" />
         </div>
@@ -396,11 +396,15 @@ export default function CartPage() {
                     {/*Order Items*/}
                     <div className="px-2 py-2 h-fit font-bold text-xl md:text-2xl">Daftar Makanan</div>
                     <div className="border border-black/4 bg-white rounded-lg p-2 h-fit shadow-md">
-                        {cart!.items.map((item) =>
-                            <CartItem
-                                key={item.menu_id}
-                                menu={item}
-                            />)}
+                        {cart!.items.map((item: MenuData, index: number, array: MenuData[]) => (
+                            <div key={item.menu_id}>
+                            <CartItem menu={item} />
+
+                            {index < array.length - 1 && (
+                                <Divider></Divider>
+                            )}
+                            </div>
+                        ))}
                     </div>
 
                     {/*Cart Price*/}

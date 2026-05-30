@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { authMe, handleLogoutApi, refreshAccessToken } from "@/lib/users";
-import { fetchWrapper } from "@/utils/fetchWrapper";
-import { ApiErrorData, TokenData } from "@/utils/types";
+import { authMe } from "@/lib/users";
 import { createContext, useContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 
@@ -75,9 +73,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(storedToken);
 
       if (storedToken) {
-        isUserAuthorized(storedToken);
-        const decoded = jwtDecode(storedToken);
-        setUserPayload(decoded as any);
+        try {
+          isUserAuthorized(storedToken);
+          const decoded = jwtDecode(storedToken);
+          setUserPayload(decoded as any);
+        } catch (err) {
+          setIsLoading(false);
+          setError(() => {
+            // tes error.tsx
+            throw err;
+          })
+        }
       }
       setIsLoading(false);
     }
@@ -91,6 +97,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserPayload(decoded as any);
       } catch (err) {
         console.error("Invalid token", err);
+        setError(() => {
+          throw err;
+        })
       }
     }
   }, [token]); // rerender saat token berubah
