@@ -9,6 +9,7 @@ import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, 
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
 import BottomSnackbar from "@/components/BottomSnackbar";
+import { ResponseObject } from "@/utils/interfaces";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -216,6 +217,7 @@ export default function HomePage() {
             });
           }
         } catch (err: unknown) {
+          // bakal dihandle sama error.tsx root layout
           setError(() => {
             throw err;
           })
@@ -244,9 +246,10 @@ export default function HomePage() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetchCartItems(token);
+        const response = await fetchCartItems(token) as ResponseObject;
+        const data = response.data as CartResponseData;
         if (response && response.data) {
-          setMenuCount(response.data?.items?.length || 0)
+          setMenuCount(data?.items?.length || 0)
         }
       }
     }

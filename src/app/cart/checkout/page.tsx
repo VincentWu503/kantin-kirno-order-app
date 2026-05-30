@@ -6,10 +6,27 @@ import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
 import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
-import { Error } from "@mui/icons-material";
+import { Error, SubdirectoryArrowLeftOutlined } from "@mui/icons-material";
 import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
 import { fetchUser } from "@/lib/users";
 import { fetchRestaurantStatus } from "@/lib/restaurant";
+import { ResponseObject } from "@/utils/interfaces";
+
+// <MenuItem value="Utama">Utama</MenuItem>
+// <MenuItem value="M">M</MenuItem>
+// <MenuItem value="P">P</MenuItem>
+// <MenuItem value="L">L</MenuItem>
+// <MenuItem value="J">J</MenuItem>
+// <MenuItem value="R">R</MenuItem>
+
+enum BuildingTypes {
+    Utama = "Utama",
+    M = "M",
+    P = "P", 
+    L = "L",
+    J = "J",
+    R = "R",
+}
 
 function CartItem({ menu }: { menu: MenuData }) {
     return (<div className="grid grid-cols-3 gap-2 h-fit px-2 py-2 border-b">
@@ -59,20 +76,29 @@ export default function CartPage() {
 
     const [isLoading, setLoading] = useState<boolean>(true);
     const [cart, setCart] = useState<CartResponseData | null>();
+    
+    // harga menu setelah perhitungan, perhitungan valid adalah perhitungan dari backend
     const [totalPrice, setTotalPrice] = useState<number>(0);
+
+    // harga menu sebelum penambahan uang parkir
+    const [subtotalPrice, setSubtotalPrice] = useState<number>(0);
+    // uang parkir
+    const [deliveryFee, setDeliveryFee] = useState<number>(0);
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
-    const [accessToken, setAccessToken] = useState("");
-
     //Form states
-    const [location, setLocation] = useState<{ building: string, floor: string, extra: string }>({ building: "Utama", floor: "1", extra: "" } as { building: string, floor: string, extra: string });
+    const [location, setLocation] = useState<{ building: BuildingTypes, floor: string, extra: string }>(
+        { building: BuildingTypes.Utama, floor: "1", extra: "" } as 
+        { building: BuildingTypes, floor: string, extra: string }
+    );
     const [notes, setNotes] = useState<string>("");
     const [takeaway, setTakeaway] = useState<boolean>(false);
     const [phone, setPhone] = useState<string>("");
     const [name, setName] = useState<string>("");
 
     const [checked, setCheck] = useState<boolean>(false);
-
+    
+    const [, setGlobalError] = useState<Error | null>(null);
     const [error, setError] = useState<{
         phone: boolean,
         location: boolean,
@@ -102,37 +128,82 @@ export default function CartPage() {
     }, []);
 
     useEffect(() => {
+        const fee = countDeliveryFee();
+        setDeliveryFee(fee);
+    }, [location.building])
+
+    useEffect(() => {
+        const subtotal = countMenuSubtotal()
+        // console.log(subtotal)
+        setSubtotalPrice(subtotal);
+    }, [cart])
+
+    useEffect(() => {
+        // const accessToken = localStorage.getItem('token') || "";
         async function updatePrice() {
             if (!takeaway) {
-                const priceResponse = await fetchCartPrice(accessToken, location);
-                if (priceResponse != null) setTotalPrice((priceResponse as { price: number }).price);
+                // console.log(location)
+                const price = await calculateActualPrice();
+
+                // console.log(priceResponse.price);
+                if (price != null) setTotalPrice((price as number));
             } else {
-                setTotalPrice(countMenuPriceTotal());
+                setTotalPrice(subtotalPrice);
             }
         }
         updatePrice();
-    }, [location, takeaway, accessToken]);
+    }, [location, takeaway]);
 
-    function countMenuPriceTotal() {
+    async function calculateActualPrice() {
+        try {
+            const accessToken = localStorage.getItem('token') || "";
+            const price = await fetchCartPrice(accessToken, location) as ResponseObject;
+            // console.log(price)
+            const priceResponse = price.data as any;
+
+            return priceResponse.price;
+        } catch (err) {
+            setGlobalError(() => {
+                throw err;
+            })
+        }
+    }
+
+    function countMenuSubtotal() {
         if (cart) {
             let res = 0;
             for (const item of cart!.items) {
-                res += item.price * item.quantity!;
+                res += Number(item.price) * Number(item.quantity!);
             }
+            // console.log(res)
             return res;
         }
         return 0;
     }
 
+    function countDeliveryFee() {
+        const chargedBuildings: BuildingTypes[] = [
+            BuildingTypes.L,
+            BuildingTypes.R,
+            BuildingTypes.J
+        ]
+
+        const building: BuildingTypes = location.building
+
+        const fee = chargedBuildings.includes(building) ? 2000 : 0;
+
+        return fee;
+    }
+
     function handlePhoneChanged(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setPhone(e.target.value);
-    }
+    } 
 
     function handleDeliverChoiceChanged(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setTakeaway(e.target.value === "deliver" ? false : true);
     }
 
-    function handleBuildingChange(e: ChangeEvent<Omit<HTMLInputElement, "value"> & { value: string; }, Element> | (Event & { target: { value: string; name: string; }; }), child: ReactNode) {
+    function handleBuildingChange(e: ChangeEvent<Omit<HTMLInputElement, "value"> & { value: BuildingTypes; }, Element> | (Event & { target: { value: BuildingTypes; name: string; }; }), child: ReactNode) {
         setLocation({ ...location, building: e.target.value })
     }
 
@@ -167,24 +238,24 @@ export default function CartPage() {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
-        setAccessToken(localStorage.getItem('token') || "");
-
+        // setAccessToken(localStorage.getItem('token') || ""); // jangan kayak begini...., langsung akses localStorage udah w BILANGIN
+        const accessToken = localStorage.getItem('token') || "";
         async function doProcess() {
-
             //set forms
             const data = ((await fetchUser(accessToken))).data as unknown as any;
             console.log(data);
             setPhone(data.phone_no || "+62");
             setName(data.username);
 
-
             //set cart
-            const response = await fetchCartItems(accessToken);
+            const response = await fetchCartItems(accessToken) as ResponseObject;
             if (response != null) setCart((response.data as CartResponseData));
 
-            //set price total
-            const priceResponse = await fetchCartPrice(accessToken, location);
-            if (priceResponse != null) setTotalPrice((priceResponse as { price: number }).price);
+            //set price total (backend)
+            const priceResponse = await fetchCartPrice(accessToken, location) as ResponseObject;
+
+            const priceData = priceResponse.data as any;
+            if (priceResponse != null) setTotalPrice((priceData.price || 0));
             setLoading(false);
         }
         doProcess();
@@ -229,7 +300,10 @@ export default function CartPage() {
                                     onChange={handleNameChange}
                                     size="small"
                                     required
-                                    inputProps={{ maxLength: 32 }}
+                                    // inputProps={{ maxLength: 32 }} // di gw ini invalid props
+                                    slotProps={{
+                                        htmlInput: { maxLength: 32 }
+                                    }}
                                     helperText={`Nama pembeli (${name.length}/32)`}
                                     className="flex-1"
                                 />
@@ -242,14 +316,14 @@ export default function CartPage() {
                                     onChange={handlePhoneChanged}
                                     error={error["phone"]}
                                     required
-                                    helperText={error["phone"] ? "Format nomor tidak valid" : ""}
+                                    helperText={error["phone"] ? "Format nomor tidak valid" : "Pastikan nomor Anda bisa dihubungi, ya."}
                                     className="flex-1"
                                 />
                             </div>
                         </Stack>
 
                         {/*Delivery info */}
-                        <Stack className="gap-2 mt-4">
+                        <Stack className="gap-2 mt-4" direction="column">
                             <div className="font-bold text-3xl">Pengiriman</div>
                             <FormControl required>
                                 <FormLabel>Opsi Pengiriman</FormLabel>
@@ -260,25 +334,49 @@ export default function CartPage() {
                             </FormControl>
                             <Stack direction="row" className="gap-2 flex-wrap">
                                 <FormControl required className="w-fit" error={error.location && !takeaway}>
-                                    <FormLabel className="text-center">Gedung</FormLabel>
-                                    <Select value={location.building} onChange={handleBuildingChange} disabled={takeaway} className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}>
-                                        <MenuItem value="Utama">Utama</MenuItem>
+                                <FormLabel>Gedung</FormLabel>
+                                <Select value={location.building} 
+                                        onChange={handleBuildingChange} 
+                                        disabled={takeaway} 
+                                        className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}
+                                >
+                                        {/* <MenuItem value="Utama">Utama</MenuItem>
                                         <MenuItem value="M">M</MenuItem>
                                         <MenuItem value="P">P</MenuItem>
                                         <MenuItem value="L">L</MenuItem>
                                         <MenuItem value="J">J</MenuItem>
-                                        <MenuItem value="R">R</MenuItem>
+                                        <MenuItem value="R">R</MenuItem> */}
+                                        <MenuItem value={BuildingTypes.Utama} >Utama</MenuItem>
+                                        <MenuItem value={BuildingTypes.M} >M</MenuItem>
+                                        <MenuItem value={BuildingTypes.P} >P</MenuItem>
+                                        <MenuItem value={BuildingTypes.L} >L</MenuItem>
+                                        <MenuItem value={BuildingTypes.J} >J</MenuItem>
+                                        <MenuItem value={BuildingTypes.R} >R</MenuItem>
                                     </Select>
                                 </FormControl>
                                 <FormControl required className="w-fit" error={error.location && !takeaway}>
-                                    <FormLabel className="text-center">Lantai</FormLabel>
-                                    <OutlinedInput startAdornment="Lt. " value={location.floor} onChange={handleFloorChange} className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`} slotProps={{ input: { className: "text-center w-10" } }} disabled={takeaway}></OutlinedInput>
+                                    <FormLabel>Lantai</FormLabel>
+                                    <OutlinedInput startAdornment="Lt. " 
+                                    value={location.floor} 
+                                    onChange={handleFloorChange} 
+                                    className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`} 
+                                    slotProps={{ input: { className: "text-center w-10" } }} 
+                                    disabled={takeaway}
+                                >
+                                </OutlinedInput>
                                 </FormControl>
-                                <FormControl className="w-fit" >
-                                    <FormLabel className="text-center">Informasi Tambahan</FormLabel>
-                                    <OutlinedInput className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`} value={location.extra} onChange={handleExtraChange} slotProps={{ input: { className: "size-fit" } }} placeholder="Info Lokasi Tambahan" disabled={takeaway}></OutlinedInput>
-                                </FormControl>
+ 
                             </Stack>
+                            <FormControl>
+                                <FormLabel>Informasi Tambahan</FormLabel>
+                                <OutlinedInput 
+                                    value={location.extra} 
+                                    onChange={handleExtraChange} 
+                                    placeholder="Info Lokasi Tambahan" 
+                                    disabled={takeaway}
+                                >
+                                </OutlinedInput>
+                            </FormControl>
                             <FormControl>
                                 <FormLabel>Catatan untuk penjual</FormLabel>
                                 <TextField
@@ -310,7 +408,7 @@ export default function CartPage() {
                     <div className="border border-black/4 bg-white rounded-lg p-4 h-fit shadow-md flex gap-2 flex-col">
                         <div className="flex justify-between text-sm md:text-base">
                             <span className="block">Biaya Makanan</span>
-                            <span className="block font-semibold">{formatIDR(countMenuPriceTotal())}</span>
+                            <span className="block font-semibold">{formatIDR(subtotalPrice)}</span>
                         </div>
                         <div className="flex justify-between text-sm md:text-base">
                             <span className="flex items-center gap-1">Biaya Pengiriman
@@ -321,11 +419,11 @@ export default function CartPage() {
                                     <Error fontSize="small" color="disabled" />
                                 </Tooltip>
                             </span>
-                            <span className="block font-semibold">{takeaway ? "Gratis" : formatIDR(Math.max(0, totalPrice - countMenuPriceTotal()))}</span>
+                            <span className="block font-semibold">{takeaway ? "Gratis" : formatIDR(deliveryFee)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg md:text-2xl pt-2 border-t border-gray-300">
                             <span className="block">Total</span>
-                            <span className="block text-green-600">{formatIDR(totalPrice)}</span>
+                            <span className="block text-green-600">{formatIDR(subtotalPrice + deliveryFee)}</span>
                         </div>
                     </div>
 
@@ -342,7 +440,7 @@ export default function CartPage() {
                     >
                         Bayar Pesanan &rarr;
                     </button>
-                    <div className={`text-center text-sm md:text-base font-semibold rounded px-2 py-1 ${isOpen ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
+                    <div className={`text-center text-sm md:text-base font-semibold rounded-full px-2 py-1 ${isOpen ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
                         {isOpen ? "✓ Kantin sedang buka" : "✗ Kantin sedang tutup dan tidak melayani secara online"}
                     </div>
                 </div>
@@ -354,7 +452,7 @@ export default function CartPage() {
                 location={location}
                 takeaway={takeaway}
                 notes={notes}
-                price={totalPrice!}
+                price={totalPrice}
                 handleConfirm={handleButtonConfirm}
             />
 
