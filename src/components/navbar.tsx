@@ -8,7 +8,7 @@ const User = (props: SVGProps<SVGSVGElement>) => <svg {...props} fill="currentCo
 
 const navItems = [
   { name: 'Beranda', icon: Home, href: '/' },
-  { name: 'Pesanan', icon: ClipboardList, href: '/orders' },
+  { name: 'Pesanan', icon: ClipboardList, href: '/status' },
   { name: 'Riwayat', icon: History, href: '/history' },
   { name: 'Profil', icon: User, href: '/profile' },
 ];
