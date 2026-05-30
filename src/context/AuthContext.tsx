@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { authMe, handleLogoutApi, refreshAccessToken } from "@/lib/users";
 import { fetchWrapper } from "@/utils/fetchWrapper";
-import { ApiErrorData, TokenData} from "@/utils/types";
+import { ApiErrorData, TokenData } from "@/utils/types";
 import { createContext, useContext, useState, useEffect } from "react";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext<{
   isLoggedIn: boolean;
@@ -12,17 +13,17 @@ const AuthContext = createContext<{
   setIsNavigating: (value: boolean) => void;
   login: (token: string) => void;
   logout: () => void;
-  getToken: () => string | null;
-  getUserPayload: () => void;
+  // getToken: () => string | null;
+  getUserPayload: () => any;
 }>({
   isLoggedIn: false,
   isLoading: true,
   isNavigating: false,
-  setIsNavigating: () => {},
-  login: () => {},
-  logout: () => {},
-  getToken: () => null,
-  getUserPayload: () => {}
+  setIsNavigating: () => { },
+  login: () => { },
+  logout: () => { },
+  // getToken: () => null,
+  getUserPayload: () => { }
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -35,11 +36,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isUserAuthorized = async (token: string) => {
     try {
-        const response = await authMe(token);
+      const response = await authMe(token);
 
-        if (response.status === 200) {
-          if (!isLoggedIn) setIsLoggedIn(true);
-        }
+      if (response.status === 200) {
+        if (!isLoggedIn) setIsLoggedIn(true);
+      }
     } catch (err: any) {
       console.log(err.message)
       if (err.message === 'Fetch Error: Failed to fetch') {
@@ -56,10 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // refresh token gagal
-      if (details.statusCode === 401 || details.statusCode === 403) { 
-          logout();
-          setIsLoading(false);
-          return;
+      if (details.statusCode === 401 || details.statusCode === 403) {
+        logout();
+        setIsLoading(false);
+        return;
       }
 
       setError(() => {
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("token") || "";
       setToken(storedToken);
-      
+
       if (storedToken) {
         isUserAuthorized(storedToken);
         const decoded = jwtDecode(storedToken);
@@ -108,20 +109,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-      setToken("");
-      localStorage.removeItem("token");
-      setIsLoggedIn(false);
-      setUserPayload(null);
+    setToken("");
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setUserPayload(null);
   };
-
-  const getToken = () => {return token};
 
   const getUserPayload = () => {
     return userPayload;
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, getToken, getUserPayload }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, isNavigating, setIsNavigating, login, logout, getUserPayload }}>
       {children}
     </AuthContext.Provider>
   );

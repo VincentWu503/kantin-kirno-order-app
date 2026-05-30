@@ -1,9 +1,9 @@
 "use client";
-import React from "react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { fetchWrapper } from "@/utils/fetchWrapper";
 import Image from "next/image";
+import { fetchCompletedOrders } from "@/lib/order";
 
 // vin or siapa pun tolong jangan hapus comment gw. gw udh pusing bacac code seniri jadi gw kasih tanda, so dont touch it.
 // data place holder ( jo minta ada 1 pas blm login)
@@ -42,7 +42,7 @@ function ItemCard({ nama, harga, image_url }: { nama: string; harga: string; ima
         <div className="flex items-center gap-4">
             <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                 {image_url ? (
-                    <Image src={image_url} alt={nama} fill className="object-cover rounded-xl md:rounded-2xl" />
+                    <Image src={image_url} alt={nama} fill sizes="80px" className="object-cover rounded-xl md:rounded-2xl" />
                 ) : (
                     <div className="w-full h-full bg-red-400" />
                 )}
@@ -87,16 +87,25 @@ export default function HistoryPage() {
 
         const loadOrders = async () => {
         try {
+            // const token = getToken();
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
             const payload = getUserPayload() as unknown as { user_id: string } | null;
             if (!payload) {
-            setLoading(false);
-            return;
+                setLoading(false);
+                return;
             }
             
-            const data = await fetchWrapper(`/order/user/${payload.user_id}`, {
-            method: "GET",
-            credentials: "include",
-            }) as { orders?: Order[] };
+            // const data = await fetchWrapper(`/order/user/${payload.user_id}`, {
+            //     method: "GET",
+            //     credentials: "include",
+            //     headers: {
+            //         'Authorization': `Bearer ${token}`
+            //     }
+            // }) as { orders?: Order[] };
+
+            const data = await fetchCompletedOrders(payload.user_id, token) as {orders?: Order[]};
 
             const rawOrders = data.orders ?? [];
 
@@ -224,3 +233,4 @@ export default function HistoryPage() {
         </div>
     );
 }
+

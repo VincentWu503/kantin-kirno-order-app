@@ -5,9 +5,10 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
 import { fetchMenu } from "@/lib/menu";
 import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
-import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Pagination, Snackbar, Stack } from "@mui/material";
+import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
+import BottomSnackbar from "@/components/BottomSnackbar";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -22,14 +23,14 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
       </div>
       {/* <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p> */}
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent:'space-between'}}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <span className="text-xs md:text-sm lg:text-base font-medium text-black truncate">{menu.name}</span>
         {
-          menu.is_available ? 
-          <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> : 
-          <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
+          menu.is_available ?
+            <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> :
+            <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
         }
-      </Stack>  
+      </Stack>
       <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
     </div>
     <button
@@ -109,13 +110,13 @@ export default function HomePage() {
   const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
 
   const OFFSET_DEFAULT = 0;
-  const LIMIT_DEFAULT = 12;
+  const LIMIT_DEFAULT = 8;
   const TIMEOUT_MS = 500;
 
 
   const [, setError] = useState<Error | null>(null);
 
-  const { isLoggedIn, getUserPayload, getToken } = useAuth();
+  const { isLoggedIn, getUserPayload } = useAuth();
   const [profile, setProfile] = useState({
     name: "User",
     profileUrl: loggedInImage,
@@ -142,17 +143,40 @@ export default function HomePage() {
   const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
-    setAccessToken(getToken() || "");
+    // stale token problem (auth context masih nyimpan token lama waktu refresh), eksperimen ganti langsung akses localstorage
+    setAccessToken(localStorage.getItem('token') || "");
   }, [isLoggedIn])
 
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
-      if (await addToCart(currentMenu, menuQuantity, accessToken)) {
+      if (!accessToken || accessToken.trim() === "") {
+        setSeverity("error");
+        setSnackbarMessage("Sesi Anda telah berakhir! Harap login ulang.");
+        setSnackbar(true);
+        setCurrentMenu(null);
+        return;
+      }
+
+      let status;
+      try {
+        const result = await addToCart(currentMenu, menuQuantity, accessToken);
+        status = result.status;
+      } catch (err: any) {
+        const errData = JSON.parse(err.message);
+
+        status = errData.status;
+      }
+      if (status === 200 || status === 204) {
         setSeverity("success");
         setSnackbarMessage("Menu berhasil dimasukkan!");
       } else {
-        setSeverity("error");
-        setSnackbarMessage("Menu gagal dimasukkan!");
+        if (status === 409) {
+          setSeverity("error");
+          setSnackbarMessage("Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!")
+        } else {
+          setSeverity("error");
+          setSnackbarMessage("Menu gagal dimasukkan!");
+        }
       }
       setSnackbar(true);
     }
@@ -206,11 +230,9 @@ export default function HomePage() {
     const menuData = async () => {
       setMenuLoading(true);
       const menus = await fetchMenu(offset, limit, search || undefined);
-      if (menus &&  (menus as MenuResponseData).data) {
+      if (menus && (menus as MenuResponseData).data) {
         setMenu(menus as MenuResponseData)
-      } else {
-        setMenu({ data: [], count: 0 } as MenuResponseData); // Untuk safe fallback ketika API gagal, biar gk error terus tiap render
-      }
+      } 
       setMenuLoading(false);
     }
     menuData();
@@ -219,12 +241,13 @@ export default function HomePage() {
   useEffect(() => {
     async function doProcess() {
       if (currentMenu == null) {
-        const token = getToken();
+        const token = localStorage.getItem('token');
         if (!token) return;
 
         const response = await fetchCartItems(token);
-        if (response) setMenuCount((response as CartResponseData).items.length); // tambahin field count di response api aja.
-        // example: SELECT COUNT from database, return those count value as count field
+        if (response && response.data) {
+          setMenuCount(response.data?.items?.length || 0)
+        }
       }
     }
     doProcess();
@@ -241,11 +264,13 @@ export default function HomePage() {
               src={isLoggedIn ? profile.profileUrl : guestImage}
               alt="Profile"
               fill
+              loading="eager"
+              sizes="(max-width: 768px) 40px, 56px"
               className="object-cover"
             />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-sm md:text-xl font-serif font-bold text-black leading-tight">
+            <h1 className="text-sm md:text-xl font-bold text-black leading-tight">
               {isLoggedIn ? `Halo, ${profile.name}` : "Sahera Pak Kirno"}
             </h1>
             {isLoggedIn && <span className="text-[10px] md:text-xs text-gray-500">Selamat Makan!</span>}
@@ -286,20 +311,26 @@ export default function HomePage() {
       {/* Menu Grid */}
       {menuLoading ?
         (<CircularProgress aria-label="Loading…" size={'5rem'} className="mx-auto size-fit flex" />) :
-        (<>
-          <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
-            {(menu!.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
-          </main>
+        (menu && menu.data ? (
+          <>
+            <main className="self-center px-4 py-4 md:px-6 md:py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 max-w-7xl mx-auto">
+              {(menu.data ?? []).map((item) => <MenuCard key={item.menu_id} menu={item} handle={handleAddToCart} />)}
+            </main>
 
-          <Pagination
-            className="size-fit py-3 mx-auto text-2xl"
-            count={Math.ceil((menu!.count ?? 0) / limit)}
-            onChange={handlePageChange}
-            variant="outlined"
-            shape="rounded"
-            page={page}
-          />
-        </>)
+            {page >= Math.ceil(menu.count / limit) && <Divider className="text-xs px-6 mb-2">Anda telah mencapai akhir halaman~</Divider>}
+
+            <Pagination
+              className="size-fit py-3 mx-auto text-2xl"
+              count={Math.ceil((menu.count ?? 0) / limit)}
+              onChange={handlePageChange}
+              variant="outlined"
+              shape="rounded"
+              page={page}
+            />
+          </>
+        ) : (
+          <div className="text-center py-8 text-gray-500">Tidak ada menu tersedia</div>
+        ))
       }
 
       {/* Popups */}
@@ -311,7 +342,7 @@ export default function HomePage() {
         handleConfirm={handleMenuConfirm}
       />
       <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
-      <Snackbar
+      {/* <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbar(false)}
@@ -321,7 +352,14 @@ export default function HomePage() {
         <Alert severity={severity as AlertColor} onClick={() => setSnackbar(false)}>
           {snackbarMessage}
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
+      <BottomSnackbar 
+        open={snackbarOpen} 
+        severity={"success"} 
+        snackbarMessage={snackbarMessage}
+        closeAction={() => setSnackbar(false)}
+      >
+      </BottomSnackbar>
     </div>
   );
 }
