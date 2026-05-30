@@ -9,6 +9,7 @@ import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, 
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
 import BottomSnackbar from "@/components/BottomSnackbar";
+import { ResponseObject } from "@/utils/interfaces";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
@@ -162,6 +163,13 @@ export default function HomePage() {
         const result = await addToCart(currentMenu, menuQuantity, accessToken);
         status = result.status;
       } catch (err: any) {
+        if (err.name === 'TypeError' && err.message === 'NetworkError when attempting to fetch resource.') {
+          setError(() => {
+            // THROW BUAT DIHANDLE error.tsx!!!
+            throw err;
+          })
+        }
+
         const errData = JSON.parse(err.message);
 
         status = errData.status;
@@ -216,6 +224,7 @@ export default function HomePage() {
             });
           }
         } catch (err: unknown) {
+          // bakal dihandle sama error.tsx root layout
           setError(() => {
             throw err;
           })
@@ -229,11 +238,23 @@ export default function HomePage() {
   useEffect(() => {
     const menuData = async () => {
       setMenuLoading(true);
-      const menus = await fetchMenu(offset, limit, search || undefined);
-      if (menus && (menus as MenuResponseData).data) {
-        setMenu(menus as MenuResponseData)
-      } 
-      setMenuLoading(false);
+
+      try {
+        const menus = await fetchMenu(offset, limit, search || undefined);
+        if (menus && (menus as MenuResponseData).data) {
+          setMenu(menus as MenuResponseData)
+        } 
+        setMenuLoading(false);
+      } catch (err: any) {
+        setMenuLoading(false);
+        if (err.name === 'TypeError' && err.message === 'NetworkError when attempting to fetch resource.') {
+          setError(() => {
+            // THROW BUAT DIHANDLE error.tsx!!!
+            throw err;
+          })
+        }
+      }
+
     }
     menuData();
   }, [offset, limit, search]);
@@ -244,9 +265,16 @@ export default function HomePage() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetchCartItems(token);
-        if (response && response.data) {
-          setMenuCount(response.data?.items?.length || 0)
+        try {
+          const response = await fetchCartItems(token) as ResponseObject;
+          const data = response.data as CartResponseData;
+          if (response && response.data) {
+            setMenuCount(data?.items?.length || 0)
+          }
+        } catch (err) {
+          setError(() => {
+            throw err;
+          })
         }
       }
     }
