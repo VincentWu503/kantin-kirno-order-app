@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Montserrat, Noto_Sans_Chakma } from "next/font/google";
-import { CartResponseData, MenuData,  } from "@/utils/types";
+import { CartResponseData, MenuData, } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
 import { deleteCartItem, updateCartItem, fetchCartItems } from "@/lib/cart";
 import { AlertColor, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
@@ -13,36 +13,36 @@ import BottomSnackbar from "@/components/BottomSnackbar";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-function DeleteSuccessModal({ open, handleClose, handleConfirm }: { 
-    open: boolean, 
-    handleClose: () => void, 
+function DeleteSuccessModal({ open, handleClose, handleConfirm }: {
+    open: boolean,
+    handleClose: () => void,
     handleConfirm: () => Promise<boolean>
 }) {
-  return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>
-        Apakah Anda yakin ingin menghapus item keranjang ini?
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Jika berubah pikiran, Anda bisa menambahkan kembali melalui halaman menu.
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} variant="outlined" autoFocus>
-          Kembali
-        </Button>
-        <Button onClick={handleConfirm} variant="outlined" autoFocus>
-          Hapus
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
+    return (
+        <Dialog open={open} onClose={handleClose}>
+            <DialogTitle>
+                Apakah Anda yakin ingin menghapus item keranjang ini?
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Jika berubah pikiran, Anda bisa menambahkan kembali melalui halaman menu.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose} variant="outlined" autoFocus>
+                    Kembali
+                </Button>
+                <Button onClick={handleConfirm} variant="outlined" autoFocus>
+                    Hapus
+                </Button>
+            </DialogActions>
+        </Dialog>
+    )
 }
 
-function CartCard({ menu, handleChange, handleDelete }: { 
-    menu: MenuData, 
-    handleChange: (menu: MenuData, quantity: number) => Promise<void>, 
+function CartCard({ menu, handleChange, handleDelete }: {
+    menu: MenuData,
+    handleChange: (menu: MenuData, quantity: number) => Promise<void>,
     handleDelete: (menu: MenuData) => void
 }) {
     const [currentCount, setCount] = useState<number>(menu.quantity!);
@@ -62,66 +62,66 @@ function CartCard({ menu, handleChange, handleDelete }: {
 
 
     return (
-    <div className="border border-black/4 bg-white rounded-lg p-4 h-full shadow-md grid grid-cols-3 gap-2">
-        <div className="col-span-1 h-full">
-            <img 
-                src={menu.image_url ? menu.image_url : ""} 
-                alt={"Image:" + menu.name} 
-                className="w-full h-full object-cover rounded-md"
-            />
-        </div>
-
-        <div className="col-span-2 flex flex-col justify-between pl-3 md:pl-6 lg:pl-9">
-            <div className="flex justify-between items-start">
-                <div className="md:text-2xl font-medium text-sm pr-2">
-                    {menu.name}
-                </div>
-                <button
-                    className="self-start flex-shrink-0 focus:outline-none"
-                    onClick={() => handleDelete(menu)}
-                >
-                    <Delete />
-                </button>
+        <div className="border border-black/4 bg-white rounded-lg p-4 h-full shadow-md grid grid-cols-3 gap-2">
+            <div className="col-span-1 h-full">
+                <img
+                    src={menu.image_url ? menu.image_url : ""}
+                    alt={"Image:" + menu.name}
+                    className="w-full h-full object-cover rounded-md"
+                />
             </div>
 
-            <div className="text-green-900 font-bold md:text-2xl md:pt-2">
-                {formatIDR(menu.price * currentCount)}
-            </div>
-
-            <div className="flex justify-between items-end">
-                <div className="md:text-lg font-medium text-sm text-gray-600 mt-1 truncate">
-                    {formatIDR(menu.price)} / porsi
-                </div>
-                <div className="flex items-center gap-1 md:gap-2">
-                    <button 
-                        className="focus:outline-none" 
-                        onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}
+            <div className="col-span-2 flex flex-col justify-between pl-3 md:pl-6 lg:pl-9">
+                <div className="flex justify-between items-start">
+                    <div className="md:text-2xl font-medium text-sm pr-2">
+                        {menu.name}
+                    </div>
+                    <button
+                        className="self-start flex-shrink-0 focus:outline-none"
+                        onClick={() => handleDelete(menu)}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5">
-                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                    <input
-                        type="number"
-                        className="w-8 text-center appearance-none"
-                        min={1}
-                        max={100}
-                        value={currentCount}
-                        step={1}
-                        onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
-                    />
-                    <button 
-                        className="focus:outline-none" 
-                        onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5" >
-                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
-                        </svg>
+                        <Delete />
                     </button>
                 </div>
+
+                <div className="text-green-900 font-bold md:text-2xl md:pt-2">
+                    {formatIDR(menu.price * currentCount)}
+                </div>
+
+                <div className="flex justify-between items-end">
+                    <div className="md:text-lg font-medium text-sm text-gray-600 mt-1 truncate">
+                        {formatIDR(menu.price)} / porsi
+                    </div>
+                    <div className="flex items-center gap-1 md:gap-2">
+                        <button
+                            className="focus:outline-none"
+                            onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5">
+                                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                        <input
+                            type="number"
+                            className="w-8 text-center appearance-none"
+                            min={1}
+                            max={100}
+                            value={currentCount}
+                            step={1}
+                            onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
+                        />
+                        <button
+                            className="focus:outline-none"
+                            onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5" >
+                                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
     )
 }
 
@@ -159,11 +159,12 @@ export default function CartPage() {
         if (response != null) {
             const cartData = response.data;
             setCart((cartData as CartResponseData));
-        } 
+        }
     }
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         };
@@ -249,9 +250,9 @@ export default function CartPage() {
                 </div>
             </div>
 
-            <DeleteSuccessModal 
-                open={deleteItem !== null} 
-                handleClose={() => setDeleteItem(null)} 
+            <DeleteSuccessModal
+                open={deleteItem !== null}
+                handleClose={() => setDeleteItem(null)}
                 handleConfirm={async () => {
                     const result = await handleMenuDelete(deleteItem!);
                     if (!result) {
@@ -270,9 +271,9 @@ export default function CartPage() {
             />
 
             {/* Snackbar */}
-            <BottomSnackbar 
-                open={snackbarActive} 
-                severity={snackbarSeverity as AlertColor} 
+            <BottomSnackbar
+                open={snackbarActive}
+                severity={snackbarSeverity as AlertColor}
                 snackbarMessage={snackbarMessage}
                 closeAction={() => setSnackbar(false)}
             >
@@ -293,6 +294,6 @@ export default function CartPage() {
                 Checkout
             </Button> */}
         </div>
-            
+
     );
 }

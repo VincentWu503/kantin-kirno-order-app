@@ -124,7 +124,7 @@ export default function HomePage() {
   })
 
   const [snackbarOpen, setSnackbar] = useState(false);
-  const [severity, setSeverity] = useState("success");
+  const [severity, setSeverity] = useState<AlertColor>("success");
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const [loginDialogOpen, setLoginDialog] = useState(false);
@@ -162,6 +162,7 @@ export default function HomePage() {
       try {
         const result = await addToCart(currentMenu, menuQuantity, accessToken);
         status = result.status;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (err.name === 'TypeError' && err.message === 'NetworkError when attempting to fetch resource.') {
           setError(() => {
@@ -193,7 +194,7 @@ export default function HomePage() {
 
   function handleSearchTimeout(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
     if (searchTimeout) clearTimeout(searchTimeout);
-    setSearchTimeout(setTimeout(() => { setSearch(e.target.value); setOffset(0) }, TIMEOUT_MS))
+    setSearchTimeout(setTimeout(() => { setSearch(e.target.value); setOffset(0); setPage(1) }, TIMEOUT_MS))
   }
 
   function handlePageChange(event: ChangeEvent<unknown, Element>, page: number) {
@@ -242,9 +243,10 @@ export default function HomePage() {
       try {
         const menus = await fetchMenu(offset, limit, search || undefined);
         if (menus && (menus as MenuResponseData).data) {
-          setMenu(menus as MenuResponseData)
-        } 
+          setMenu(menus as MenuResponseData);
+        }
         setMenuLoading(false);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setMenuLoading(false);
         if (err.name === 'TypeError' && err.message === 'NetworkError when attempting to fetch resource.') {
@@ -269,7 +271,7 @@ export default function HomePage() {
           const response = await fetchCartItems(token) as ResponseObject;
           const data = response.data as CartResponseData;
           if (response && response.data) {
-            setMenuCount(data?.items?.length || 0)
+            setMenuCount(data!.items?.length || 0)
           }
         } catch (err) {
           setError(() => {
@@ -366,7 +368,7 @@ export default function HomePage() {
         menu={currentMenu}
         quantity={menuQuantity}
         handleClose={() => setCurrentMenu(null)}
-        handleQuantityChange={(n) => setQuantity(n <= 0 ? 1 : (n >= 101 ? 100 : n))}
+        handleQuantityChange={(n) => setQuantity(n <= 0 ? 0 : (n >= 101 ? 100 : n))}
         handleConfirm={handleMenuConfirm}
       />
       <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
@@ -381,9 +383,9 @@ export default function HomePage() {
           {snackbarMessage}
         </Alert>
       </Snackbar> */}
-      <BottomSnackbar 
-        open={snackbarOpen} 
-        severity={"success"} 
+      <BottomSnackbar
+        open={snackbarOpen}
+        severity={severity}
         snackbarMessage={snackbarMessage}
         closeAction={() => setSnackbar(false)}
       >

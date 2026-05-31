@@ -6,11 +6,13 @@ import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
 import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormGroup, FormLabel, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField, Tooltip } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
-import { Error, SubdirectoryArrowLeftOutlined } from "@mui/icons-material";
+import { Error } from "@mui/icons-material";
 import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
 import { fetchUser } from "@/lib/users";
 import { fetchRestaurantStatus } from "@/lib/restaurant";
 import { ResponseObject } from "@/utils/interfaces";
+import { fetchCreateOrder } from "@/lib/order";
+import { useRouter } from "next/navigation";
 
 // <MenuItem value="Utama">Utama</MenuItem>
 // <MenuItem value="M">M</MenuItem>
@@ -22,7 +24,7 @@ import { ResponseObject } from "@/utils/interfaces";
 enum BuildingTypes {
     Utama = "Utama",
     M = "M",
-    P = "P", 
+    P = "P",
     L = "L",
     J = "J",
     R = "R",
@@ -73,10 +75,11 @@ export default function CartPage() {
     const PHONE_REGEX = new RegExp('^(\\+62|62|0)[8123456789][0-9]{8,13}$');
 
     const { isLoggedIn, getUserPayload } = useAuth();
+    const router = useRouter();
 
     const [isLoading, setLoading] = useState<boolean>(true);
     const [cart, setCart] = useState<CartResponseData | null>();
-    
+
     // harga menu setelah perhitungan, perhitungan valid adalah perhitungan dari backend
     const [totalPrice, setTotalPrice] = useState<number>(0);
 
@@ -88,7 +91,7 @@ export default function CartPage() {
 
     //Form states
     const [location, setLocation] = useState<{ building: BuildingTypes, floor: string, extra: string }>(
-        { building: BuildingTypes.Utama, floor: "1", extra: "" } as 
+        { building: BuildingTypes.Utama, floor: "1", extra: "" } as
         { building: BuildingTypes, floor: string, extra: string }
     );
     const [notes, setNotes] = useState<string>("");
@@ -97,7 +100,7 @@ export default function CartPage() {
     const [name, setName] = useState<string>("");
 
     const [checked, setCheck] = useState<boolean>(false);
-    
+
     const [, setGlobalError] = useState<Error | null>(null);
     const [error, setError] = useState<{
         phone: boolean,
@@ -107,7 +110,7 @@ export default function CartPage() {
         location: false,
     });
 
-    const cannotOrder = !isOpen || !checked || (takeaway ? false : (error.location || error.phone));
+    const cannotOrder = error.phone || !isOpen || !checked || (takeaway ? false : (error.location));
     const [modalShow, setModalShow] = useState<boolean>(false);
 
     useEffect(() => {
@@ -130,7 +133,7 @@ export default function CartPage() {
     useEffect(() => {
         const fee = countDeliveryFee();
         setDeliveryFee(fee);
-    }, [location.building])
+    }, [location.building, takeaway])
 
     useEffect(() => {
         const subtotal = countMenuSubtotal()
@@ -182,6 +185,7 @@ export default function CartPage() {
     }
 
     function countDeliveryFee() {
+        if (takeaway) return 0;
         const chargedBuildings: BuildingTypes[] = [
             BuildingTypes.L,
             BuildingTypes.R,
@@ -197,7 +201,7 @@ export default function CartPage() {
 
     function handlePhoneChanged(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setPhone(e.target.value);
-    } 
+    }
 
     function handleDeliverChoiceChanged(e: ChangeEvent<HTMLInputElement, HTMLInputElement>) {
         setTakeaway(e.target.value === "deliver" ? false : true);
@@ -230,8 +234,27 @@ export default function CartPage() {
         setModalShow(true);
     }
 
-    function handleButtonConfirm(_e: never) {
-        //TODO: THIS
+    async function handleButtonConfirm(_e: never) {
+        const accessToken = localStorage.getItem("token") || "";
+        try {
+            const checkoutData = await fetchCreateOrder(
+                takeaway ? "" : location.building,
+                takeaway ? "" : location.floor,
+                takeaway ? "" : location.extra,
+                notes,
+                name,
+                phone,
+                accessToken
+            ) as ResponseObject;
+
+            const data = checkoutData.data as any;
+            if (data.payment.url) router.replace(data.payment.url);
+
+        } catch (err) {
+            setGlobalError(() => {
+                throw err;
+            })
+        }
     }
 
 
@@ -334,12 +357,12 @@ export default function CartPage() {
                             </FormControl>
                             <Stack direction="row" className="gap-2 flex-wrap">
                                 <FormControl required className="w-fit" error={error.location && !takeaway}>
-                                <FormLabel>Gedung</FormLabel>
-                                <Select value={location.building} 
-                                        onChange={handleBuildingChange} 
-                                        disabled={takeaway} 
+                                    <FormLabel>Gedung</FormLabel>
+                                    <Select value={location.building}
+                                        onChange={handleBuildingChange}
+                                        disabled={takeaway}
                                         className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}
-                                >
+                                    >
                                         {/* <MenuItem value="Utama">Utama</MenuItem>
                                         <MenuItem value="M">M</MenuItem>
                                         <MenuItem value="P">P</MenuItem>
@@ -356,23 +379,23 @@ export default function CartPage() {
                                 </FormControl>
                                 <FormControl required className="w-fit" error={error.location && !takeaway}>
                                     <FormLabel>Lantai</FormLabel>
-                                    <OutlinedInput startAdornment="Lt. " 
-                                    value={location.floor} 
-                                    onChange={handleFloorChange} 
-                                    className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`} 
-                                    slotProps={{ input: { className: "text-center w-10" } }} 
-                                    disabled={takeaway}
-                                >
-                                </OutlinedInput>
+                                    <OutlinedInput startAdornment="Lt. "
+                                        value={location.floor}
+                                        onChange={handleFloorChange}
+                                        className={`transition w-fit ${takeaway ? "bg-gray-200" : ""}`}
+                                        slotProps={{ input: { className: "text-center w-10" } }}
+                                        disabled={takeaway}
+                                    >
+                                    </OutlinedInput>
                                 </FormControl>
- 
+
                             </Stack>
                             <FormControl>
                                 <FormLabel>Informasi Tambahan</FormLabel>
-                                <OutlinedInput 
-                                    value={location.extra} 
-                                    onChange={handleExtraChange} 
-                                    placeholder="Info Lokasi Tambahan" 
+                                <OutlinedInput
+                                    value={location.extra}
+                                    onChange={handleExtraChange}
+                                    placeholder="Info Lokasi Tambahan"
                                     disabled={takeaway}
                                 >
                                 </OutlinedInput>
@@ -398,11 +421,11 @@ export default function CartPage() {
                     <div className="border border-black/4 bg-white rounded-lg p-2 h-fit shadow-md">
                         {cart!.items.map((item: MenuData, index: number, array: MenuData[]) => (
                             <div key={item.menu_id}>
-                            <CartItem menu={item} />
+                                <CartItem menu={item} />
 
-                            {index < array.length - 1 && (
-                                <Divider></Divider>
-                            )}
+                                {index < array.length - 1 && (
+                                    <Divider></Divider>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -423,7 +446,7 @@ export default function CartPage() {
                                     <Error fontSize="small" color="disabled" />
                                 </Tooltip>
                             </span>
-                            <span className="block font-semibold">{takeaway ? "Gratis" : formatIDR(deliveryFee)}</span>
+                            <span className="block font-semibold">{deliveryFee == 0 ? "Gratis" : formatIDR(deliveryFee)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg md:text-2xl pt-2 border-t border-gray-300">
                             <span className="block">Total</span>
