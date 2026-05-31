@@ -93,31 +93,25 @@ function CartCard({ menu, handleChange, handleDelete }: {
                         {formatIDR(menu.price)} / porsi
                     </div>
                     <div className="flex items-center gap-1 md:gap-2">
-                        <button
-                            className="focus:outline-none"
-                            onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5">
-                                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm3 10.5a.75.75 0 0 0 0-1.5H9a.75.75 0 0 0 0 1.5h6Z" clipRule="evenodd" />
-                            </svg>
-                        </button>
-                        <input
-                            type="number"
-                            className="w-8 text-center appearance-none"
-                            min={1}
-                            max={100}
-                            value={currentCount}
-                            step={1}
-                            onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
-                        />
-                        <button
-                            className="focus:outline-none"
-                            onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="md:w-8 md:h-8 w-5 h-5" >
-                                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
-                            </svg>
-                        </button>
+                        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                            <button
+                                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors text-lg focus:outline-none"
+                                onClick={() => setCount(currentCount - 1 <= 0 ? 1 : (currentCount > 100 ? 100 : currentCount - 1))}
+                            >-</button>
+                            <input
+                                type="number"
+                                className="w-12 sm:w-16 text-center py-1 text-sm sm:text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                min={1}
+                                max={100}
+                                value={currentCount}
+                                step={1}
+                                onChange={(e) => isNaN(+e.target.value) ? setCount(currentCount) : +e.target.value > 100 ? setCount(100) : +e.target.value <= 0 ? setCount(1) : setCount(Math.floor(+e.target.value))}
+                            />
+                            <button
+                                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors text-lg focus:outline-none"
+                                onClick={() => setCount(currentCount + 1 >= 100 ? 100 : (currentCount <= 0 ? 1 : currentCount + 1))}
+                            >+</button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ import { fetchCompletedOrders } from "@/lib/order";
 const daftarPesanan = [
   {
     id: 1,
-    namaPesanan: "pesanan 1",
+    namaPesanan: "Pesanan 1",
     tanggal: "02/08/2024",
     totalHarga : "Rp. 21.000", // dipake pricelist gofood
     items: [

@@ -12,36 +12,53 @@ import BottomSnackbar from "@/components/BottomSnackbar";
 import { ResponseObject } from "@/utils/interfaces";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
-  // return <div className="border border-black flex flex-col gap-3 md:gap-4 p-2 pt-3 pb-3 shadow-md rounded-lg md:rounded-xl">
-  return <div className="border border-black/4 flex flex-col gap-4 mb-2 md:mb-3 md:gap-4 p-2 pt-3 pb-3 shadow-lg/shadow-2xl rounded-lg md:rounded-xl">
-    <div className="p-2 md:p-3 rounded-2xl md:rounded-3xl ">
-      <div className="flex justify-center items-center w-full aspect-square bg-red-600 rounded-sm md:rounded-lg mb-2 md:mb-3">
+  return <div className="bg-white flex flex-col justify-between mb-2 md:mb-3 p-3 shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 rounded-xl md:rounded-2xl h-full">
+    <div>
+      <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
         {menu.image_url ? (
-          <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover rounded-xl md:rounded-2xl" />
+          <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover absolute inset-0 transition-transform duration-300 hover:scale-105" />
         ) : (
-          <div className="w-full h-full bg-red-400" />
+          <div className="w-full h-full bg-gray-200 absolute inset-0 flex items-center justify-center">
+            <span className="text-gray-400 text-xs">No Image</span>
+          </div>
         )}
       </div>
-      {/* <p className="text-xs md:text-sm lg:text-base font-medium line-clamp-2 text-black">{menu.name}</p> */}
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <span className="text-xs md:text-sm lg:text-base font-medium text-black truncate">{menu.name}</span>
-        {
-          menu.is_available ?
-            <span className="text-xs md:text-sm lg:text-base font-medium text-green-600">Tersedia</span> :
-            <span className="text-xs md:text-sm lg:text-base font-medium text-red-700">Habis</span>
-        }
-      </Stack>
-      <p className="text-xs md:text-sm text-black">Rp {menu.price}</p>
+      <div className="flex flex-col gap-1.5 mb-3 px-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm md:text-base font-bold text-gray-800 line-clamp-2 leading-tight">
+            {menu.name}
+          </h3>
+        </div>
+        
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-sm md:text-base font-bold text-blue-600">
+            {formatIDR(menu.price)}
+          </p>
+          {menu.is_available ? (
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] md:text-xs font-bold whitespace-nowrap">
+              Tersedia
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[10px] md:text-xs font-bold whitespace-nowrap">
+              Habis
+            </span>
+          )}
+        </div>
+      </div>
     </div>
+
     <button
-      className={`mx-3 py-2 md:py-2.5 lg:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm lg:text-base font-medium ${menu.is_available ? " bg-gray-200 hover:bg-gray-300 transition active:scale-95 text-black" : 'bg-gray-400 text-gray-300'}`}
+      className={`mt-auto w-full py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all duration-200 ${
+        menu.is_available 
+          ? "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-sm" 
+          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+      }`}
       disabled={!menu.is_available}
       onClick={() => handle(menu)}
     >
       {menu.is_available ? "Add to Cart" : "Unavailable"}
     </button>
-    { /* Maybe add a special message if item cant be bought*/}
   </div>
 }
 
@@ -72,31 +89,64 @@ function LoginPromptDialog({ open, handleClose, }: { open: boolean, handleClose:
 
 function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClose, handleConfirm }: { menu: MenuData | null, quantity: number, handleQuantityChange: (n: number) => void, handleClose: () => void, handleConfirm: () => void }) {
   return (
-    <Dialog open={menu !== null} onClose={handleClose}>
+    <Dialog open={menu !== null} onClose={handleClose} maxWidth="sm" fullWidth>
       {
         menu == null ?
           undefined :
           <>
-            <DialogTitle>
+            <DialogTitle className="text-lg md:text-xl font-bold pb-2">
               Add To Cart
             </DialogTitle>
-            <Stack direction="row" spacing={2}>
-              {menu.image_url ? (
-                <img src={menu.image_url} alt={menu.name} className="w-full h-full min-w-32 object-cover rounded-sm px-6 pr-0" />  /*Vincent, your problem */
-              ) : (
-                <div className="w-full h-full bg-red-400" />
-              )}
-              <Container className="w-xl pl-0 sm:pl-3 text-xs sm:text-base md:text-lg md:pl-5">
-                <div className="font-bold mb-3 ">{menu.name}</div>
-                <div className="font-medium mb-1"><input type="number" value={quantity} className="w-7 md:w-10" min={1} max={100} step={1} onChange={(e) => handleQuantityChange(+e.target.value)} /> x {formatIDR(menu.price)}</div>
-                <div>Total: {formatIDR(quantity * menu.price)}</div>
-              </Container>
-            </Stack>
-            <DialogActions>
-              <Button onClick={handleClose} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
+            <DialogContent dividers className="px-4 py-4 md:px-6 md:py-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+                <div className="w-full sm:w-1/3 aspect-square shrink-0 rounded-lg overflow-hidden bg-gray-100 shadow-sm relative">
+                  {menu.image_url ? (
+                    <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover absolute inset-0" />
+                  ) : (
+                    <div className="w-full h-full bg-red-400 absolute inset-0" />
+                  )}
+                </div>
+                <div className="w-full sm:w-2/3 flex flex-col gap-3">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 leading-tight">
+                    {menu.name}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                      <button 
+                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors text-lg"
+                        onClick={() => handleQuantityChange(quantity - 1)}
+                      >-</button>
+                      <input 
+                        type="number" 
+                        value={quantity} 
+                        className="w-12 sm:w-16 text-center py-1 text-sm sm:text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                        min={1} 
+                        max={100} 
+                        onChange={(e) => handleQuantityChange(+e.target.value)} 
+                      />
+                      <button 
+                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition-colors text-lg"
+                        onClick={() => handleQuantityChange(quantity + 1)}
+                      >+</button>
+                    </div>
+                    <span className="text-sm sm:text-base text-gray-600 font-medium whitespace-nowrap">
+                      x {formatIDR(menu.price)}
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <span className="text-sm sm:text-base text-gray-500 font-medium">Total:</span>
+                    <span className="text-base sm:text-lg md:text-xl font-bold text-blue-600">
+                      {formatIDR(quantity * menu.price)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+            <DialogActions className="px-4 py-3 md:px-6 md:py-4 bg-gray-50/50">
+              <Button onClick={handleClose} variant="outlined" color="inherit" className="text-sm sm:text-base rounded-lg py-1.5 px-4 normal-case font-medium">
                 Kembali
               </Button>
-              <Button onClick={handleConfirm} variant="outlined" autoFocus className="text-xs md:text-base lg:text-lg">
+              <Button onClick={handleConfirm} variant="contained" color="primary" disableElevation className="text-sm sm:text-base rounded-lg py-1.5 px-6 normal-case font-medium bg-blue-600 hover:bg-blue-700">
                 Tambah
               </Button>
             </DialogActions>
