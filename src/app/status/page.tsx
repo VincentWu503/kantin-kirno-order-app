@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuth } from "@/context/AuthContext";
+
 interface OrderItem {
     nama: string;
     quantity: number;
@@ -44,6 +46,7 @@ const getStatusColor = (status: string) => {
 
 export default function StatusPage() {
     const router = useRouter();
+    const { isLoggedIn, isLoading: authLoading } = useAuth();
     
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -51,6 +54,14 @@ export default function StatusPage() {
     const [activeTab, setActiveTab] = useState<"ongoing" | "history">("ongoing");
 
     useEffect(() => {
+        if (!authLoading && !isLoggedIn) {
+            router.push("/auth/login");
+        }
+    }, [isLoggedIn, authLoading, router]);
+
+    useEffect(() => {
+        if (!isLoggedIn) return; // Wait until authenticated
+
         const loadOrders = async () => {
             // MENGGUNAKAN DATA PLACEHOLDER (MOCK DATA)
             setTimeout(() => {
