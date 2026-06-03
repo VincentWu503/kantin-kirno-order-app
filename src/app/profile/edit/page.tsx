@@ -28,7 +28,7 @@ export default function EditProfilePage() {
         if (!token) return;
         const result = await fetchUser(token);
         if (result.status === 200) {
-          const data = result.data;
+          const data = result.data as any;
           setUsername(data.username || "");
           setNim(data.phone_no || "");
           setProfileImage(data.profile_image_url || "");

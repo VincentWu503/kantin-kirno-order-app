@@ -30,7 +30,7 @@ const ProfilePage: React.FC = () => {
       if (token) {
         const result = await fetchUser(token);
         if (result.status === 200) {
-          const data = result.data;
+          const data = result.data as any;
           setProfile({
             namaPelanggan: data.username || "Tanpa Nama",
             nim: data.phone_no || "",
