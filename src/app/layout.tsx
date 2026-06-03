@@ -7,6 +7,15 @@ import LoadingScreen from "@/components/loading";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import "./globals.css";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import Error from "@/app/error";
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "@/theme";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,9 +49,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased bg-gray-50 m-0 p-0">
-        <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
-        </AuthProvider>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <ThemeProvider theme={theme}>
+            <ErrorBoundary errorComponent={Error}>
+              <AuthProvider>
+                <LayoutContent>{children}</LayoutContent>
+              </AuthProvider>
+            </ErrorBoundary>
+          </ThemeProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

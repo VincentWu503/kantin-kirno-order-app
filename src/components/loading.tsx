@@ -3,11 +3,12 @@ import Image from 'next/image';
 export default function LoadingScreen() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0084ff]">
-      <div className="relative w-64 h-64 animate-pulse">
+      <div className="relative w-36 h-36 animate-pulse">
         <Image 
-          src="https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+          src="/kirno_logo_512.png"
           alt="Loading"
           fill
+          loading="eager"
           className="object-contain"
         />
       </div>
