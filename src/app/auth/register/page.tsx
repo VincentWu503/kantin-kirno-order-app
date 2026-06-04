@@ -2,6 +2,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { fetchWrapper } from "@/utils/fetchWrapper";
 import ErrorDialog from "@/components/ErrorDialog";
 
@@ -113,8 +114,15 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col text-black">
-      <div className="bg-blue-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
-        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2 mb-6">
+      <div className="w-full bg-blue-500 h-32 md:h-48 lg:h-56 items-center justify-center flex pb-7 md:pb-8 lg:pb-10">
+        <div className="relative w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 flex items-center justify-center">
+          <Image
+            src="/kirno_logo_512.png"
+            alt="Kirno Logo"
+            fill
+            loading="eager"
+            className="object-contain"
+          />
         </div>
       </div>
 
