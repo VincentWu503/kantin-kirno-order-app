@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ENV } from "@/config/env";
+import Image from "next/image";
+import { fetchWrapper } from "@/utils/fetchWrapper";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -27,24 +28,23 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/otp/request", {
+      await fetchWrapper("/auth/user/otp/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Kode OTP telah dikirim ke email Anda");
-        setStep(2);
-        setError("");
-      } else {
-        setError(data.message || "Gagal mengirim OTP");
-      }
-    } catch (err) {
+      alert("Kode OTP telah dikirim ke email Anda");
+      setStep(2);
+      setError("");
+    } catch (err: any) {
       console.error("Detail Error:", err);
-      setError("Terjadi kesalahan koneksi");
+      try {
+        const errorData = JSON.parse(err.message);
+        setError(errorData.message || "Gagal mengirim OTP");
+      } catch {
+        setError("Gagal mengirim OTP");
+      }
     } finally {
       setLoading(false);
     }
@@ -53,23 +53,22 @@ export default function ForgotPasswordPage() {
   const handleRequestNewOTP = async () => {
     setOtpRequestLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/user/otp/request", {
+      await fetchWrapper("/auth/user/otp/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Kode OTP baru telah dikirim ke email Anda");
-        setOtpCode("");
-      } else {
-        alert(data.message || "Gagal mengirim OTP baru");
-      }
-    } catch (err) {
+      alert("Kode OTP baru telah dikirim ke email Anda");
+      setOtpCode("");
+    } catch (err: any) {
       console.error("Detail Error:", err);
-      alert("Terjadi kesalahan koneksi");
+      try {
+        const errorData = JSON.parse(err.message);
+        alert(errorData.message || "Gagal mengirim OTP baru");
+      } catch {
+        alert("Gagal mengirim OTP baru");
+      }
     } finally {
       setOtpRequestLoading(false);
     }
@@ -87,24 +86,23 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/otp/check", {
+      await fetchWrapper("/auth/user/otp/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), otp_code: otpCode.trim() }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("OTP terverifikasi. Silakan buat password baru");
-        setStep(3);
-        setError("");
-      } else {
-        setError(data.message || "Kode OTP tidak valid");
-      }
-    } catch (err) {
+      alert("OTP terverifikasi. Silakan buat password baru");
+      setStep(3);
+      setError("");
+    } catch (err: any) {
       console.error("Detail Error:", err);
-      setError("Terjadi kesalahan koneksi");
+      try {
+        const errorData = JSON.parse(err.message);
+        setError(errorData.message || "Kode OTP tidak valid");
+      } catch {
+        setError("Kode OTP tidak valid");
+      }
     } finally {
       setLoading(false);
     }
@@ -127,7 +125,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${ENV.API_URL}/user/reset-password`, {
+      await fetchWrapper("/auth/user/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -138,17 +136,16 @@ export default function ForgotPasswordPage() {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Password berhasil direset! Silakan login dengan password baru.");
-        router.push("/auth/login");
-      } else {
-        setError(data.message || "Reset password gagal");
-      }
-    } catch (err) {
+      alert("Password berhasil direset! Silakan login dengan password baru.");
+      router.push("/auth/login");
+    } catch (err: any) {
       console.error("Detail Error:", err);
-      setError("Terjadi kesalahan koneksi");
+      try {
+        const errorData = JSON.parse(err.message);
+        setError(errorData.message || "Reset password gagal");
+      } catch {
+        setError("Reset password gagal");
+      }
     } finally {
       setLoading(false);
     }
@@ -156,8 +153,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex flex-col text-black">
-      <div className="bg-blue-500 h-32 md:h-48 lg:h-56 flex items-center justify-center">
-        <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 bg-yellow-400 rounded-full border-4 md:border-6 border-white flex items-center justify-center text-center p-2 mb-6">
+      <div className="w-full bg-blue-500 h-32 md:h-48 lg:h-56 items-center justify-center flex pb-7 md:pb-8 lg:pb-10">
+        <div className="relative w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 flex items-center justify-center">
+          <Image
+            src="/kirno_logo_512.png"
+            alt="Kirno Logo"
+            fill
+            loading="eager"
+            className="object-contain"
+            />
         </div>
       </div>
 
