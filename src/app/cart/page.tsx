@@ -223,6 +223,14 @@ export default function CartPage() {
             {/* isi halaman */}
             <h1 className="text-5xl md:text-4xl font-bold mb-8 tracking-tight max-w-7xl mx-auto">Cart</h1>
 
+            {/* pesan kalo cart kosong */}
+            {cart && cart.items.length === 0 && (
+                <div className="text-center py-10">
+                    <p className="ttext-black text-center text-sm md:text-base max-w-7xl mx-auto mt-4 mb-8">
+                        Keranjang Anda kosong. Silakan tambah melalui halaman menu lihat menu</p>
+                </div>
+            )}
+
             <div className="space-y-4 mb-6 md:mb-10 max-w-7xl mx-auto">
                 {cart!.items.map((item) =>
                     <CartCard
@@ -275,11 +283,17 @@ export default function CartPage() {
 
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
-                <Link href="/cart/checkout" className="flex-1">
-                    <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                {cart && cart.items.length > 0 ? (
+                    <Link href="/cart/checkout" className="flex-1">
+                        <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                            Checkout
+                        </button>
+                    </Link>
+                ) : ( // button gak bisa click kalo cart kosong
+                    <button disabled className={`${montserrat.className} w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
                         Checkout
                     </button>
-                </Link>
+                )}
             </div>
             {/* <Button 
                 variant="contained" 
