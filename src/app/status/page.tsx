@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
+import { fetchUserOrders } from "@/lib/order"; 
+import { ResponseObject } from "@/utils/interfaces";
 
 interface OrderItem {
     nama: string;
@@ -31,9 +33,9 @@ const getStatusColor = (status: string) => {
     switch (status) {
         case "Belum Dibayar":
             return "bg-red-500";
-        case "Di Masak":
+        case "Sedang Dimasak":
             return "bg-yellow-500";
-        case "Sudah Siap":
+        case "Siap Diambil/Diantar":
             return "bg-green-500";
         case "Selesai":
             return "bg-blue-500";
@@ -44,9 +46,42 @@ const getStatusColor = (status: string) => {
     }
 };
 
+const ORDER_STATUS_MAP: Record<string, string> = {
+    "PENDING": "Belum Dibayar",
+    "PROCESSING": "Sedang Dimasak",
+    "READY": "Siap Diambil/Diantar",
+    "COMPLETED": "Selesai",
+    "CANCELLED": "Dibatalkan",
+};
+
+function mapApiHistory(apiOrder: any): Order {
+    const statusLabel = ORDER_STATUS_MAP[apiOrder.order_status] ?? apiOrder.order_status;
+    const isCompleted = apiOrder.order_status === "COMPLETED" || apiOrder.order_status === "CANCELLED";
+
+    const date = new Date(apiOrder.date);
+    const tanggal = date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    }) + " " + date.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+
+    return {
+        order_id: apiOrder.order_id,
+        tanggal,
+        totalHarga: parseFloat(apiOrder.total_price),
+        statusLabel,
+        isCompleted,
+        items: [],
+    };
+}
+
 export default function StatusPage() {
     const router = useRouter();
-    const { isLoggedIn, isLoading: authLoading } = useAuth();
+    const { isLoggedIn, isLoading: authLoading, getUserPayload } = useAuth();
     
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);

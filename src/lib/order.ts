@@ -1,8 +1,9 @@
 import { fetchWrapper } from "@/utils/fetchWrapper";
 
-export async function fetchCompletedOrders(userId: string, accessToken: string) {
+export async function fetchUserOrders(userId: string, accessToken: string, isCompleted: boolean) {
     try {
-        const data = await fetchWrapper(`/order/user/${userId}`, {
+        const queryparam = isCompleted ? `?completed=true` : '';
+        const data = await fetchWrapper(`/order/user/${userId}${queryparam}`, {
             method: "GET",
             credentials: "include",
             headers: {
@@ -14,7 +15,7 @@ export async function fetchCompletedOrders(userId: string, accessToken: string) 
     } catch (err) {
         console.error('Detailed')
     }
-}
+} 
 
 export async function fetchCreateOrder(building: string, floor: string, extra: string, note: string, name: string, phoneNo: string, accessToken: string) {
     try {
