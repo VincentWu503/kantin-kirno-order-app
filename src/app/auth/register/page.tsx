@@ -210,6 +210,20 @@ export default function RegisterPage() {
       <div className="flex-1 bg-white p-4 md:p-8 -mt-6 md:-mt-8 rounded-t-3xl md:rounded-t-4xl">
         {step === 1 ? (
           <form onSubmit={handleRegister} className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto">
+            {/* Back button */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="text-gray-500 hover:opacity-70 transition"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-500 font-medium">Langkah 1 dari 3</span>
+            </div>
+
             <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-black text-center">Registrasi</h2>
 
             <div>
@@ -289,6 +303,23 @@ export default function RegisterPage() {
           </form>
         ) : step === 2 ? (
           <form onSubmit={handleCheckOTP} className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto">
+            {/* Back button */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(1);
+                  setOtpCode("");
+                }}
+                className="text-gray-500 hover:opacity-70 transition"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-500 font-medium">Langkah 2 dari 3</span>
+            </div>
+
             <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-700 text-center">Verifikasi OTP</h2>
             
             <div>
@@ -329,6 +360,22 @@ export default function RegisterPage() {
           </form>
         ) : (
           <form onSubmit={handleVerifyEmail} className="bg-gray-200 p-4 md:p-6 lg:p-8 rounded-2xl md:rounded-3xl space-y-4 md:space-y-6 max-w-md mx-auto">
+            {/* Back button */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(2);
+                }}
+                className="text-gray-500 hover:opacity-70 transition"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-500 font-medium">Langkah 3 dari 3</span>
+            </div>
+
             <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-700 text-center">Verifikasi Email</h2>
             <p className="text-xs md:text-sm text-center text-gray-600">Email Anda telah diverifikasi dengan OTP. Klik tombol di bawah untuk menyelesaikan registrasi.</p>
 
