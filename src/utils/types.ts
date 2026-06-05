@@ -43,3 +43,12 @@ export type ApiErrorData = {
 export type TokenData = {
     token: string
 }
+
+// kamus penyesuaian enum backend order status
+export const ORDER_STATUS_MAP: Record<string, string> = {
+    "PENDING": "Belum Dibayar",
+    "PROCESSING": "Sedang Dimasak",
+    "READY": "Siap Diambil/Diantar",
+    "COMPLETED": "Selesai",
+    "CANCELLED": "Dibatalkan",
+};

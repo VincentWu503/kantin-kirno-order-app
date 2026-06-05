@@ -4,11 +4,15 @@ import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
 import { fetchUserOrders } from "@/lib/order";
+import { formatIDR } from "@/utils/utils";
+import { ORDER_STATUS_MAP } from "@/utils/types";
 
 interface OrderItem {
-    nama: string;
-    quantity: number;
-    harga: number;
+    // menu_id: number,
+    name: string;
+    quantity: number; // banyak porsi
+    image_url: string;
+    price: number; // harga per porsi
 }
 
 interface Order {
@@ -20,13 +24,11 @@ interface Order {
     items: OrderItem[];
 }
 
-function formatRupiah(amount: number): string {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(amount);
-}
+// "PENDING": "Belum Dibayar",
+// "PROCESSING": "Sedang Dimasak",
+// "READY": "Siap Diambil/Diantar",
+// "COMPLETED": "Selesai",
+// "CANCELLED": "Dibatalkan",
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,14 +47,6 @@ const getStatusColor = (status: string) => {
     }
 };
 
-const ORDER_STATUS_MAP: Record<string, string> = {
-    "PENDING": "Belum Dibayar",
-    "PROCESSING": "Sedang Dimasak",
-    "READY": "Siap Diambil/Diantar",
-    "COMPLETED": "Selesai",
-    "CANCELLED": "Dibatalkan",
-};
-
 function mapApiHistory(apiOrder: any): Order {
     const statusLabel = ORDER_STATUS_MAP[apiOrder.order_status] ?? apiOrder.order_status;
     const isCompleted = apiOrder.order_status === "COMPLETED" || apiOrder.order_status === "CANCELLED";
@@ -60,9 +54,9 @@ function mapApiHistory(apiOrder: any): Order {
     const date = new Date(apiOrder.date);
     const tanggal = date.toLocaleDateString("id-ID", {
         day: "2-digit",
-        month: "2-digit",
+        month: "short",
         year: "numeric",
-    }) + " " + date.toLocaleTimeString("id-ID", {
+    }) + ", " + date.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -74,7 +68,7 @@ function mapApiHistory(apiOrder: any): Order {
         totalHarga: parseFloat(apiOrder.total_price),
         statusLabel,
         isCompleted,
-        items: [],
+        items: apiOrder.items || [],
     };
 }
 
@@ -109,8 +103,8 @@ export default function StatusPage() {
                     statusLabel: "Sudah Siap",
                     isCompleted: false,
                     items: [
-                        { nama: "Nasi Goreng Spesial", quantity: 2, harga: 20000 },
-                        { nama: "Es Teh Manis", quantity: 2, harga: 5000 }
+                        { name: "Nasi Goreng Spesial", quantity: 2, price: 20000, image_url: "" },
+                        { name: "Es Teh Manis", quantity: 2, price: 5000, image_url: "" }
                     ]
                 },
                 {
@@ -120,7 +114,7 @@ export default function StatusPage() {
                     statusLabel: "Di Masak",
                     isCompleted: false,
                     items: [
-                        { nama: "Mie Ayam Bakso", quantity: 1, harga: 15000 }
+                        { name: "Mie Ayam Bakso", quantity: 1, price: 15000, image_url: "" }
                     ]
                 },
                 {
@@ -130,8 +124,8 @@ export default function StatusPage() {
                     statusLabel: "Selesai",
                     isCompleted: true,
                     items: [
-                        { nama: "Ayam Geprek", quantity: 2, harga: 15000 },
-                        { nama: "Es Jeruk", quantity: 1, harga: 5000 }
+                        { name: "Ayam Geprek", quantity: 2, price: 15000, image_url: "" },
+                        { name: "Es Jeruk", quantity: 1, price: 5000, image_url: "" }
                     ]
                 }
             ];
@@ -269,10 +263,10 @@ return (
                         >
                             {/* Header: ID (Kiri) dan Tanggal (Kanan) */}
                             <div className="flex justify-between items-center border-b border-gray-50 pb-3">
-                                <span className="font-bold text-gray-900 text-lg">
-                                    #{pesanan.order_id.split("-")[0].toUpperCase()}
+                                <span className="font-bold text-gray-900 text-sm md:text-base line-clamp-2">
+                                    {pesanan.items.map(makanan => makanan.name).join(', ')}
                                 </span>
-                                <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                <span className="text-xs font-semibold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100 min-w-[116px]">
                                     {pesanan.tanggal}
                                 </span>
                             </div>
@@ -281,7 +275,7 @@ return (
                             <div className="flex justify-between items-end">
                                 <div className="flex flex-col gap-1.5">
                                     <p className="text-sm font-semibold text-gray-700">
-                                        Total {totalMenu} Menu - {formatRupiah(pesanan.totalHarga)}
+                                        Total {totalMenu} Menu - {formatIDR(pesanan.totalHarga)}
                                     </p>
                                     {activeTab === "history" && (
                                         <p className="text-xs font-bold text-gray-500 mt-0.5">
@@ -291,7 +285,7 @@ return (
                                 </div>
 
                                 {activeTab === "ongoing" ? (
-                                    <div className={`px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold text-white ${getStatusColor(pesanan.statusLabel)}`}>
+                                    <div className={`text-center px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold text-white min-w-[116px] ${getStatusColor(pesanan.statusLabel)}`}>
                                         {pesanan.statusLabel}
                                     </div>
                                 ) : (

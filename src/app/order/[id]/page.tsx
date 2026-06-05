@@ -2,6 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
+import { getOrderByOrderId } from "@/lib/order";
+import { ORDER_STATUS_MAP } from "@/utils/types";
+import { Button } from "@mui/material";
 
 interface OrderItem {
     name: string;
@@ -14,8 +17,7 @@ interface OrderDetail {
     order_id: string;
     date: string;
     total_price: number;
-    fulfilled: boolean;
-    transaction_status: string;
+    order_status: string;
     items: OrderItem[];
     location?: {
         building: string;
@@ -49,22 +51,17 @@ const getStatusColor = (status: string) => {
     switch (status) {
         case "Belum Dibayar":
             return "bg-red-500";
-        case "Di Masak":
+        case "Sedang Dimasak":
             return "bg-yellow-500";
-        case "Sudah Siap":
+        case "Siap Diambil/Diantar":
             return "bg-green-500";
+        case "Selesai":
+            return "bg-blue-500";
         case "Dibatalkan":
             return "bg-gray-500";
         default:
             return "bg-gray-500";
     }
-};
-
-const getStatusLabel = (fulfilled: boolean, transaction_status: string) => {
-    if (fulfilled) return "Sudah Siap";
-    if (transaction_status === "SUCCESS") return "Di Masak";
-    if (transaction_status === "FAILED") return "Dibatalkan";
-    return "Belum Dibayar";
 };
 
 export default function OrderDetailPage() {
@@ -76,30 +73,64 @@ export default function OrderDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
+    function countTotalPrice(items: OrderItem[]): number {
+        let total = 0;
+
+        for (const item of items) {
+            total += item.price * item.quantity;
+        }
+
+        return total;
+    }
+
     useEffect(() => {
         const loadOrder = async () => {
+            const token = localStorage.getItem('token')
+
+            if (!token || !params.id) return;
+            const orderId = params.id.toString();
+
+            const order = await getOrderByOrderId(orderId, token);
+            const details = order.data as any // ribet redefine interface OrderDetail
             // MENGGUNAKAN DATA PLACEHOLDER (MOCK DATA)
-            setTimeout(() => {
-                setOrder({
-                    order_id: orderId || "ORD-12345",
-                    date: "2026-06-01T15:30:00Z",
-                    total_price: 50000,
-                    fulfilled: false,
-                    transaction_status: "SUCCESS",
-                    items: [
-                        { name: "Nasi Goreng Spesial", quantity: 2, price: 20000, image_url: "" },
-                        { name: "Es Teh Manis", quantity: 2, price: 5000, image_url: "" }
-                    ],
-                    location: {
-                        building: "Gedung A",
-                        floor: "Lantai 3",
-                        extra: "Taruh di meja resepsionis"
-                    },
-                    notes: "Jangan pakai sambal, kecapnya dibanyakin ya mas.",
-                    takeaway: false
-                });
-                setLoading(false);
-            }, 800); // Simulasi loading 0.8 detik
+            // setTimeout(() => {
+            //     setOrder({
+            //         order_id: orderId || "ORD-12345",
+            //         date: "2026-06-01T15:30:00Z",
+            //         total_price: 50000,
+            //         fulfilled: false,
+            //         transaction_status: "SUCCESS",
+            //         items: [
+            //             { name: "Nasi Goreng Spesial", quantity: 2, price: 20000, image_url: "" },
+            //             { name: "Es Teh Manis", quantity: 2, price: 5000, image_url: "" }
+            //         ],
+            //         location: {
+            //             building: "Gedung A",
+            //             floor: "Lantai 3",
+            //             extra: "Taruh di meja resepsionis"
+            //         },
+            //         notes: "Jangan pakai sambal, kecapnya dibanyakin ya mas.",
+            //         takeaway: false
+            //     });
+            //     setLoading(false);
+            // }, 800); // Simulasi loading 0.8 detik
+
+            // backend response field
+            setOrder({
+                order_id: details.order_id,
+                date: details.date,
+                total_price: countTotalPrice(details.items as OrderItem[]),
+                order_status: details.order_status,
+                items: details.items,
+                location: {
+                    building: details.building,
+                    floor: details.floor,
+                    extra: details.extra
+                },
+                notes: details.note,
+                takeaway: details.is_takeaway
+            })
+            setLoading(false)
         };
 
         loadOrder();
@@ -133,7 +164,7 @@ export default function OrderDetailPage() {
         );
     }
 
-    const statusLabel = getStatusLabel(order.fulfilled, order.transaction_status);
+    const statusLabel = ORDER_STATUS_MAP[order.order_status] ?? order.order_status;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-44 font-sans text-black">
@@ -208,7 +239,7 @@ export default function OrderDetailPage() {
                 </div>
 
                 {/* Delivery/Location Info */}
-                {order.location && (
+                {!order.takeaway && order.location && (
                     <div className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
                         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,7 +294,7 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Floating Bottom Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+            <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
                 <div className="max-w-2xl mx-auto p-4 md:px-6">
                     {/* Total Summary */}
                     <div className="flex justify-between items-center mb-4">
@@ -273,31 +304,41 @@ export default function OrderDetailPage() {
                                 {formatRupiah(order.total_price)}
                             </span>
                         </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => router.back()}
-                            className="w-1/3 flex items-center justify-center bg-gray-50 text-gray-800 py-3.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-100 active:scale-[0.98] transition-all"
-                        >
-                            Kembali
-                        </button>
-                        {order.fulfilled || order.transaction_status !== "SUCCESS" ? (
-                            <button
-                                onClick={() => router.push("/")}
-                                className="w-2/3 bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all"
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            {/* w komen ini dulu, tombol kembail sudah ada panah ,- di pojok kiri atas */}
+                            {/* <button
+                                onClick={() => router.back()}
+                                className="w-1/3 flex items-center justify-center bg-gray-50 text-gray-800 py-3.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-100 active:scale-[0.98] transition-all"
                             >
-                                Pesan Lagi
-                            </button>
-                        ) : (
-                            <button
-                                disabled
-                                className="w-2/3 bg-gray-200 text-gray-400 py-3.5 rounded-xl font-bold cursor-not-allowed"
-                            >
-                                Sedang Diproses
-                            </button>
-                        )}
+                                Kembali
+                            </button> */}
+                            {order.order_status === "COMPLETED" ? (
+                                // <button
+                                //     onClick={() => router.push("/")}
+                                //     className="w-2/3 bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all"
+                                // >
+                                //     Pesan Lagi
+                                // </button>
+                                // value sesuaikan tailwind css
+                                <Button variant="contained" 
+                                        sx={{'background-color': "var(--color-blue-600)"}}
+                                        onClick={() => router.push('/')}
+                                >
+                                    Pesan Lagi
+                                </Button>
+                            ) : (
+                                // <button
+                                //     disabled
+                                //     className="w-2/3 bg-gray-200 text-gray-400 py-3.5 rounded-xl font-bold cursor-not-allowed"
+                                // >
+                                //     {order.order_status !== "CANCELLED" ? ("Sedang Diproses") : ("Pesanan Anda Dibatalkan.")}
+                                // </button>
+                                <Button variant="contained" disabled>
+                                    {order.order_status !== "CANCELLED" ? ("Sedang Diproses") : ("Pesanan Dibatalkan")}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

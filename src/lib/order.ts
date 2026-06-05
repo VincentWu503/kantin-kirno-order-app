@@ -39,3 +39,18 @@ export async function fetchCreateOrder(building: string, floor: string, extra: s
         throw err;
     }
 }
+
+export async function getOrderByOrderId(orderId: string, accessToken: string) {
+    try {
+        const data = await fetchWrapper(`/order/${orderId}`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        })
+
+        return data;
+    } catch (err) {
+        throw err;
+    }
+}
