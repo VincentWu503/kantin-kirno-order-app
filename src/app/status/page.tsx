@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchUserOrders } from "@/lib/order";
 import { formatIDR } from "@/utils/utils";
 import { ORDER_STATUS_MAP } from "@/utils/types";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 interface OrderItem {
     // menu_id: number,
@@ -84,7 +85,7 @@ export default function StatusPage() {
     useEffect(() => {
         if (!authLoading && !isLoggedIn) {
             sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk melihat riwayat!');
-            window.dispatchEvent(new Event('session-storage-change'));
+            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
             router.replace("/");
         }
     }, [isLoggedIn, authLoading, router]);

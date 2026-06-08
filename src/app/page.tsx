@@ -9,6 +9,7 @@ import { Badge, Button, CircularProgress, Dialog, DialogActions, DialogContent, 
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
 import { ResponseObject } from "@/utils/interfaces";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   return <div className="bg-white flex flex-col justify-between mb-2 md:mb-3 p-3 shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 rounded-xl md:rounded-2xl h-full">
@@ -199,7 +200,7 @@ export default function HomePage() {
     if (currentMenu !== null) {
       if (!accessToken || accessToken.trim() === "") {
         sessionStorage.setItem('error', 'Sesi Anda telah berakhir! Silakan login ulang!');
-        window.dispatchEvent(new Event('session-storage-change'));
+        window.dispatchEvent(new Event(SESSION_STORAGE_EVENT)); // add listener
         return;
       }
 
@@ -224,18 +225,18 @@ export default function HomePage() {
         // setSeverity("success");
         // setSnackbarMessage("Menu berhasil dimasukkan!");
         sessionStorage.setItem('success', 'Menu berhasil dimasukkan!');
-        window.dispatchEvent(new Event('session-storage-change'));
+        window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
       } else {
         if (status === 409) {
           // setSeverity("error");
           // setSnackbarMessage("Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!")
           sessionStorage.setItem('error', 'Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!');
-          window.dispatchEvent(new Event('session-storage-change'));
+          window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
         } else {
           // setSeverity("error");
           // setSnackbarMessage("Menu gagal dimasukkan!");
           sessionStorage.setItem('error', 'Menu gagal dimasukkan!');
-          window.dispatchEvent(new Event('session-storage-change'));
+          window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
         }
       }
       // setSnackbar(true);

@@ -1,7 +1,7 @@
 "use client"
 import { useSyncExternalStore } from "react";
 
-const SESSION_STORAGE_EVENT = "session-storage-change";
+export const SESSION_STORAGE_EVENT = "session-storage-change";
 
 export function useSnackbarMessage(sessionKey: string) {
     function subscribe(callback: () => void) {

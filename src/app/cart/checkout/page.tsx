@@ -12,6 +12,7 @@ import { fetchRestaurantStatus } from "@/lib/restaurant";
 import { ResponseObject } from "@/utils/interfaces";
 import { fetchCreateOrder } from "@/lib/order";
 import { useRouter } from "next/navigation";
+import {SESSION_STORAGE_EVENT} from "@/hooks/useSnackbarMessage"
 
 // <MenuItem value="Utama">Utama</MenuItem>
 // <MenuItem value="M">M</MenuItem>
@@ -259,7 +260,7 @@ export default function CartPage() {
     useEffect(() => {
         if (!isLoggedIn) { 
             sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk checkout!")
-            window.dispatchEvent(new Event('session-storage-change'));
+            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
             router.replace('/');
         }  
     }, [router, isLoggedIn])

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchUser } from "@/lib/users";
-import { fetchWrapper } from "@/utils/fetchWrapper";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function EditProfilePage() {
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
       sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk mengedit profil!')
-      window.dispatchEvent(new Event('session-storage-change'));
+      window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
       router.replace('/profile');
     }
   }, [isLoading, isLoggedIn, router]);
@@ -44,7 +44,7 @@ export default function EditProfilePage() {
     }
   }, [isLoggedIn]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
