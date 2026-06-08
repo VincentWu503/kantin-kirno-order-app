@@ -10,6 +10,7 @@ import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
 import { ResponseObject } from "@/utils/interfaces";
 import BottomSnackbar from "@/components/BottomSnackbar";
+import { useRouter } from "next/navigation";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -147,7 +148,7 @@ export default function CartPage() {
 
     async function refreshCart() {
         // stale token problem, eksperiment ganti langsung akses localstorage
-        const accessToken = localStorage.getItem('token'); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh (idk why this happened before tbh)
+        const accessToken = localStorage.getItem('token'); 
         if (!accessToken) return;
         const response = await fetchCartItems(accessToken) as ResponseObject;
         if (response != null) {
@@ -155,8 +156,20 @@ export default function CartPage() {
             setCart((cartData as CartResponseData));
         }
     }
+
+    const router = useRouter();
+
     useEffect(() => {
         const token = localStorage.getItem('token');
+
+        sessionStorage.removeItem('error');
+
+        if (!isLoggedIn) {
+            sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk cek keranjang!")
+            router.replace('/');
+            return;
+        }
+
         if (!token) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
@@ -168,7 +181,7 @@ export default function CartPage() {
             setLoading(false);
         }
         doProcess();
-    }, [isLoggedIn]);
+    }, [router, isLoggedIn]);
 
     async function handleMenuChangeQuantity(menu: MenuData, quantity: number): Promise<void> {
         const accessToken = localStorage.getItem('token');

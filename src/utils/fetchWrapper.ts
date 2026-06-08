@@ -115,7 +115,7 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                     errorData = {
                         status: 500, // sama aja sih
                         statusCode: 500, // from be
-                        error: "FETCH_ERROR",
+                        code: "FETCH_ERROR",
                         description: "Terjadi kesalahan pada saat memanggil API!",
                         endpoint: endpoint
                     }
@@ -123,11 +123,12 @@ export async function fetchWrapper(endpoint: string, options: RequestInit = {}):
                     throw new Error(JSON.stringify(errorData));
                 }
 
-
+                // add code field
                 if (errorData.statusCode === 401 && errorData.error === "UNAUTHORIZED_ERROR") {
                     throw new Error(JSON.stringify({
                         statusCode: 401,
-                        message: "Sesi Anda telah berakhir! Harap login ulang."
+                        message: "Sesi Anda telah berakhir! Harap login ulang.",
+                        code: "SESSION_EXPIRED_ERROR"
                     }));
                 } else if (errorData.statusCode === 403) {
                     throw new Error(JSON.stringify({
