@@ -84,6 +84,7 @@ export default function StatusPage() {
     useEffect(() => {
         if (!authLoading && !isLoggedIn) {
             sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk melihat riwayat!');
+            window.dispatchEvent(new Event('session-storage-change'));
             router.replace("/");
         }
     }, [isLoggedIn, authLoading, router]);

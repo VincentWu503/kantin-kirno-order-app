@@ -257,13 +257,11 @@ export default function CartPage() {
     }
 
     useEffect(() => {
-        sessionStorage.removeItem('error');
         if (!isLoggedIn) { 
             sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk checkout!")
+            window.dispatchEvent(new Event('session-storage-change'));
             router.replace('/');
-        }
-
-        
+        }  
     }, [router, isLoggedIn])
 
 

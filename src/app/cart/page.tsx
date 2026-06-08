@@ -160,23 +160,16 @@ export default function CartPage() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-
-        sessionStorage.removeItem('error');
-
+        setLoading(true);
+        // const token = localStorage.getItem('token');
         if (!isLoggedIn) {
             sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk cek keranjang!")
+            window.dispatchEvent(new Event('session-storage-change'));
             router.replace('/');
             return;
         }
 
-        if (!token) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(false);
-            return;
-        };
         async function doProcess() {
-            setLoading(true);
             await refreshCart();
             setLoading(false);
         }

@@ -17,7 +17,9 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
-      router.push("/auth/login");
+      sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk mengedit profil!')
+      window.dispatchEvent(new Event('session-storage-change'));
+      router.replace('/profile');
     }
   }, [isLoading, isLoggedIn, router]);
 
@@ -51,7 +53,7 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/user/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
