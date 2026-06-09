@@ -10,7 +10,7 @@ import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
 import { ResponseObject } from "@/utils/interfaces";
 import { useRouter } from "next/navigation";
-import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
+import { SESSION_STORAGE_EVENT } from "@/utils/constants";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
