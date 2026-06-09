@@ -5,11 +5,11 @@ import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, ChangeEvent } from "react";
 import { fetchMenu } from "@/lib/menu";
 import { CartResponseData, MenuData, MenuResponseData } from "@/utils/types";
-import { Alert, AlertColor, Badge, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Pagination, Snackbar, Stack } from "@mui/material";
+import { Badge, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Pagination, Snackbar, Stack } from "@mui/material";
 import { formatIDR } from "@/utils/utils";
 import { addToCart, fetchCartItems } from "@/lib/cart";
-import BottomSnackbar from "@/components/BottomSnackbar";
 import { ResponseObject } from "@/utils/interfaces";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   return <div className="bg-white flex flex-col justify-between mb-2 md:mb-3 p-3 shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 rounded-xl md:rounded-2xl h-full">
@@ -173,9 +173,7 @@ export default function HomePage() {
     profileUrl: loggedInImage,
   })
 
-  const [snackbarOpen, setSnackbar] = useState(false);
-  const [severity, setSeverity] = useState<AlertColor>("success");
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+
 
   const [loginDialogOpen, setLoginDialog] = useState(false);
 
@@ -201,10 +199,8 @@ export default function HomePage() {
   async function handleMenuConfirm() {
     if (currentMenu !== null) {
       if (!accessToken || accessToken.trim() === "") {
-        setSeverity("error");
-        setSnackbarMessage("Sesi Anda telah berakhir! Harap login ulang.");
-        setSnackbar(true);
-        setCurrentMenu(null);
+        sessionStorage.setItem('error', 'Sesi Anda telah berakhir! Silakan login ulang!');
+        window.dispatchEvent(new Event(SESSION_STORAGE_EVENT)); // add listener
         return;
       }
 
@@ -226,18 +222,24 @@ export default function HomePage() {
         status = errData.status;
       }
       if (status === 200 || status === 204) {
-        setSeverity("success");
-        setSnackbarMessage("Menu berhasil dimasukkan!");
+        // setSeverity("success");
+        // setSnackbarMessage("Menu berhasil dimasukkan!");
+        sessionStorage.setItem('success', 'Menu berhasil dimasukkan!');
+        window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
       } else {
         if (status === 409) {
-          setSeverity("error");
-          setSnackbarMessage("Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!")
+          // setSeverity("error");
+          // setSnackbarMessage("Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!")
+          sessionStorage.setItem('error', 'Item telah ada di keranjang, silakan tambah kuantitas di halaman keranjang!');
+          window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
         } else {
-          setSeverity("error");
-          setSnackbarMessage("Menu gagal dimasukkan!");
+          // setSeverity("error");
+          // setSnackbarMessage("Menu gagal dimasukkan!");
+          sessionStorage.setItem('error', 'Menu gagal dimasukkan!');
+          window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
         }
       }
-      setSnackbar(true);
+      // setSnackbar(true);
     }
     setCurrentMenu(null);
   }
@@ -422,24 +424,6 @@ export default function HomePage() {
         handleConfirm={handleMenuConfirm}
       />
       <LoginPromptDialog handleClose={() => setLoginDialog(false)} open={loginDialogOpen} />
-      {/* <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar(false)}
-        onClick={() => setSnackbar(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert severity={severity as AlertColor} onClick={() => setSnackbar(false)}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar> */}
-      <BottomSnackbar
-        open={snackbarOpen}
-        severity={severity}
-        snackbarMessage={snackbarMessage}
-        closeAction={() => setSnackbar(false)}
-      >
-      </BottomSnackbar>
     </div>
   );
 }

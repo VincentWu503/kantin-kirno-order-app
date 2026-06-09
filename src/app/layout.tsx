@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthProvider } from "../context/AuthContext";
 import Navbar from "@/components/navbar";
 import LoadingScreen from "@/components/loading";
@@ -16,6 +16,9 @@ import '@fontsource/roboto/700.css';
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "@/theme";
+import BottomSnackbar from "@/components/BottomSnackbar";
+import { AlertColor } from "@mui/material";
+import { useSnackbarMessage } from "@/hooks/useSnackbarMessage";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,6 +49,30 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [snackbarOpen, setSnackbar] = useState(false);
+  const [severity, setSeverity] = useState<AlertColor>("success");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  // global message passing using session storage & external store react hook
+  const errorMessage = useSnackbarMessage('error').getMessage();
+  const successMessage = useSnackbarMessage('success').getMessage();
+
+  useEffect(() => {
+    if (!errorMessage) return;
+    setSeverity('error');
+    setSnackbarMessage(errorMessage);
+    setSnackbar(true);
+    sessionStorage.removeItem('error')
+  }, [errorMessage])
+
+  useEffect(() => {
+    if (!successMessage) return;
+    setSeverity('success');
+    setSnackbarMessage(successMessage);
+    setSnackbar(true);
+    sessionStorage.removeItem('success')
+  }, [successMessage])
+
   return (
     <html lang="en">
       <body className="antialiased bg-gray-50 m-0 p-0">
@@ -53,7 +80,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProvider theme={theme}>
             <ErrorBoundary errorComponent={Error}>
               <AuthProvider>
-                <LayoutContent>{children}</LayoutContent>
+                <LayoutContent>
+                  {children}
+                  <BottomSnackbar
+                    open={snackbarOpen}
+                    severity={severity}
+                    snackbarMessage={snackbarMessage}
+                    closeAction={() => setSnackbar(false)}
+                  >
+                  </BottomSnackbar>
+                </LayoutContent>
               </AuthProvider>
             </ErrorBoundary>
           </ThemeProvider>

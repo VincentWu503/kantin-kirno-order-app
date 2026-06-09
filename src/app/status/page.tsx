@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchUserOrders } from "@/lib/order";
 import { formatIDR } from "@/utils/utils";
 import { ORDER_STATUS_MAP } from "@/utils/types";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 interface OrderItem {
     // menu_id: number,
@@ -83,7 +84,9 @@ export default function StatusPage() {
 
     useEffect(() => {
         if (!authLoading && !isLoggedIn) {
-            router.push("/auth/login");
+            sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk melihat riwayat!');
+            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
+            router.replace("/");
         }
     }, [isLoggedIn, authLoading, router]);
 
@@ -95,44 +98,40 @@ export default function StatusPage() {
         const loadOrders = async () => {
             setLoading(true);
 
-            const mockOrders: Order[] = [
-                {
-                    order_id: "ORD-12345",
-                    tanggal: "01/06/2026 15:30",
-                    totalHarga: 50000,
-                    statusLabel: "Sudah Siap",
-                    isCompleted: false,
-                    items: [
-                        { name: "Nasi Goreng Spesial", quantity: 2, price: 20000, image_url: "" },
-                        { name: "Es Teh Manis", quantity: 2, price: 5000, image_url: "" }
-                    ]
-                },
-                {
-                    order_id: "ORD-67890",
-                    tanggal: "01/06/2026 12:15",
-                    totalHarga: 15000,
-                    statusLabel: "Di Masak",
-                    isCompleted: false,
-                    items: [
-                        { name: "Mie Ayam Bakso", quantity: 1, price: 15000, image_url: "" }
-                    ]
-                },
-                {
-                    order_id: "ORD-99999",
-                    tanggal: "30/05/2026 10:00",
-                    totalHarga: 35000,
-                    statusLabel: "Selesai",
-                    isCompleted: true,
-                    items: [
-                        { name: "Ayam Geprek", quantity: 2, price: 15000, image_url: "" },
-                        { name: "Es Jeruk", quantity: 1, price: 5000, image_url: "" }
-                    ]
-                }
-            ];
-
-            setOrders(mockOrders as any);
-            setLoading(false);
-
+            // const mockOrders: Order[] = [
+            //     {
+            //         order_id: "ORD-12345",
+            //         tanggal: "01/06/2026 15:30",
+            //         totalHarga: 50000,
+            //         statusLabel: "Sudah Siap",
+            //         isCompleted: false,
+            //         items: [
+            //             { name: "Nasi Goreng Spesial", quantity: 2, price: 20000, image_url: "" },
+            //             { name: "Es Teh Manis", quantity: 2, price: 5000, image_url: "" }
+            //         ]
+            //     },
+            //     {
+            //         order_id: "ORD-67890",
+            //         tanggal: "01/06/2026 12:15",
+            //         totalHarga: 15000,
+            //         statusLabel: "Di Masak",
+            //         isCompleted: false,
+            //         items: [
+            //             { name: "Mie Ayam Bakso", quantity: 1, price: 15000, image_url: "" }
+            //         ]
+            //     },
+            //     {
+            //         order_id: "ORD-99999",
+            //         tanggal: "30/05/2026 10:00",
+            //         totalHarga: 35000,
+            //         statusLabel: "Selesai",
+            //         isCompleted: true,
+            //         items: [
+            //             { name: "Ayam Geprek", quantity: 2, price: 15000, image_url: "" },
+            //             { name: "Es Jeruk", quantity: 1, price: 5000, image_url: "" }
+            //         ]
+            //     }
+            // ];
             try {
                 const payload = getUserPayload() as unknown as { user_id?: string } | null;
                 if (!payload?.user_id) return;
@@ -150,6 +149,7 @@ export default function StatusPage() {
             } catch (err) {
                 console.error('Failed to fetch orders, using mock:', err);
             }
+            setLoading(false)
         };
 
         loadOrders();

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState } from "react";
+import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { CartResponseData, MenuData } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
@@ -8,11 +8,11 @@ import { Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogConten
 import { formatIDR } from "@/utils/utils";
 import { Error } from "@mui/icons-material";
 import { fetchCartPrice, fetchCartItems } from "@/lib/cart";
-import { fetchUser } from "@/lib/users";
 import { fetchRestaurantStatus } from "@/lib/restaurant";
 import { ResponseObject } from "@/utils/interfaces";
 import { fetchCreateOrder } from "@/lib/order";
 import { useRouter } from "next/navigation";
+import {SESSION_STORAGE_EVENT} from "@/hooks/useSnackbarMessage"
 
 // <MenuItem value="Utama">Utama</MenuItem>
 // <MenuItem value="M">M</MenuItem>
@@ -81,7 +81,7 @@ export default function CartPage() {
     const [cart, setCart] = useState<CartResponseData | null>();
 
     // harga menu setelah perhitungan, perhitungan valid adalah perhitungan dari backend
-    const [totalPrice, setTotalPrice] = useState<number>(0);
+    const [totalPrice, setTotalPrice] = useState<number | null>(null);
 
     // harga menu sebelum penambahan uang parkir
     const [subtotalPrice, setSubtotalPrice] = useState<number>(0);
@@ -257,23 +257,33 @@ export default function CartPage() {
         }
     }
 
+    useEffect(() => {
+        if (!isLoggedIn) { 
+            sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk checkout!")
+            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
+            router.replace('/');
+        }  
+    }, [router, isLoggedIn])
+
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
-        // setAccessToken(localStorage.getItem('token') || ""); // jangan kayak begini...., langsung akses localStorage udah w BILANGIN
-        const accessToken = localStorage.getItem('token') || "";
+        let accessToken = localStorage.getItem('token') || "";
+        if (!accessToken) return;
         async function doProcess() {
             //set forms
-            const data = ((await fetchUser(accessToken))).data as unknown as any;
-            console.log(data);
+            const data = getUserPayload() as unknown as any;
             setPhone(data.phone_no || "+62");
-            setName(data.username);
+            setName(data.username || "");
 
             //set cart
             const response = await fetchCartItems(accessToken) as ResponseObject;
-            if (response != null) setCart((response.data as CartResponseData));
+            const cartsData = response.data as CartResponseData;
+            if (response != null) setCart((cartsData));
 
+            // update token
+            accessToken = localStorage.getItem('token') || ""; 
             //set price total (backend)
             const priceResponse = await fetchCartPrice(accessToken, location) as ResponseObject;
 
@@ -283,7 +293,6 @@ export default function CartPage() {
         }
         doProcess();
     }, [])
-
 
     if (isLoading) return (
         <div className="min-h-screen min-w-screen flex flex-col justify-center items-center align-middle bg-white p-6 pb-20 text-black">
@@ -479,7 +488,7 @@ export default function CartPage() {
                 location={location}
                 takeaway={takeaway}
                 notes={notes}
-                price={totalPrice}
+                price={subtotalPrice || 0 + deliveryFee || 0}
                 handleConfirm={handleButtonConfirm}
             />
 

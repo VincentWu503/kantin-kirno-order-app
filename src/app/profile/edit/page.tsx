@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchUser } from "@/lib/users";
-import { fetchWrapper } from "@/utils/fetchWrapper";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -17,7 +17,9 @@ export default function EditProfilePage() {
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
-      router.push("/auth/login");
+      sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk mengedit profil!')
+      window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
+      router.replace('/profile');
     }
   }, [isLoading, isLoggedIn, router]);
 
@@ -42,7 +44,7 @@ export default function EditProfilePage() {
     }
   }, [isLoggedIn]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
@@ -51,7 +53,7 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/user/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

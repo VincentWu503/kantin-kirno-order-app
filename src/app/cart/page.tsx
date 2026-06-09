@@ -9,7 +9,8 @@ import { AlertColor, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import { formatIDR } from "@/utils/utils";
 import { Delete } from "@mui/icons-material";
 import { ResponseObject } from "@/utils/interfaces";
-import BottomSnackbar from "@/components/BottomSnackbar";
+import { useRouter } from "next/navigation";
+import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -129,9 +130,6 @@ export default function CartPage() {
     const [priceUpdateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
 
     // pesan hasil aksi dan konfirmasi delete
-    const [snackbarActive, setSnackbar] = useState<boolean>(false);
-    const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-    const [snackbarSeverity, setSnackbarSeverity] = useState<string>("success");
     const [deleteItem, setDeleteItem] = useState<MenuData | null>(null);
 
     function countMenuPriceTotal() {
@@ -147,7 +145,7 @@ export default function CartPage() {
 
     async function refreshCart() {
         // stale token problem, eksperiment ganti langsung akses localstorage
-        const accessToken = localStorage.getItem('token'); // kayak gini aja, kalo set nilai access token per page ntar malah manggil refresh setiap page refresh (idk why this happened before tbh)
+        const accessToken = localStorage.getItem('token'); 
         if (!accessToken) return;
         const response = await fetchCartItems(accessToken) as ResponseObject;
         if (response != null) {
@@ -155,27 +153,31 @@ export default function CartPage() {
             setCart((cartData as CartResponseData));
         }
     }
+
+    const router = useRouter();
+
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(false);
+        setLoading(true);
+        // const token = localStorage.getItem('token');
+        if (!isLoggedIn) {
+            sessionStorage.setItem("error", "Anda harus login terlebih dahulu untuk cek keranjang!")
+            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
+            router.replace('/');
             return;
-        };
+        }
+
         async function doProcess() {
-            setLoading(true);
             await refreshCart();
             setLoading(false);
         }
         doProcess();
-    }, [isLoggedIn]);
+    }, [router, isLoggedIn]);
 
     async function handleMenuChangeQuantity(menu: MenuData, quantity: number): Promise<void> {
         const accessToken = localStorage.getItem('token');
         if (!accessToken) return;
         if (menu !== null && quantity != 0) { //Basic check
             if (await updateCartItem(menu!, quantity, accessToken)) {
-                setSnackbar(true);
                 setUpdateTimeout(setTimeout(async () => {
                     await refreshCart();
                     setUpdateTimeout(null);
@@ -258,28 +260,18 @@ export default function CartPage() {
                 handleConfirm={async () => {
                     const result = await handleMenuDelete(deleteItem!);
                     if (!result) {
-                        setSnackbarMessage("Gagal menghapus item keranjang!")
-                        setSnackbarSeverity("error");
-                        setSnackbar(true);
+                        sessionStorage.setItem("error", "Gagal menghapus item keranjang!")
+                        window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
                         setDeleteItem(null);
                         return false;
                     }
-                    setSnackbarMessage("Item keranjang telah berhasil dihapus!")
-                    setSnackbarSeverity("success");
-                    setSnackbar(true);
+                    sessionStorage.setItem("success", "Item keranjang telah berhasil dihapus!")
+                    window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
+
                     setDeleteItem(null);
                     return result;
                 }}
             />
-
-            {/* Snackbar */}
-            <BottomSnackbar
-                open={snackbarActive}
-                severity={snackbarSeverity as AlertColor}
-                snackbarMessage={snackbarMessage}
-                closeAction={() => setSnackbar(false)}
-            >
-            </BottomSnackbar>
 
             {/* tombol checkout */}
             <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
