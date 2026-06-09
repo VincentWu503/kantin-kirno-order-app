@@ -118,7 +118,7 @@ const ProfilePage: React.FC = () => {
   if (isLoadingProfile && isLoggedIn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ const ProfilePage: React.FC = () => {
       <div className="w-full max-w-md md:max-w-lg bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         
         {/* Header Profile Section */}
-        <div className="bg-orange-500 pt-10 pb-20 px-6 relative">
+        <div className="bg-blue-500 pt-10 pb-20 px-6 relative">
           <h1 className="text-2xl font-bold text-white text-center tracking-wide">
             Profil Saya
           </h1>
@@ -176,7 +176,7 @@ const ProfilePage: React.FC = () => {
             {isLoggedIn && (
               <button 
                 onClick={handleEditProfileClick}
-                className="w-full bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 font-semibold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center gap-2"
+                className="w-full bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 font-semibold py-3 px-4 rounded-xl transition duration-300 flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -190,7 +190,7 @@ const ProfilePage: React.FC = () => {
                 <p className="text-sm text-gray-600 mb-3">Silakan login untuk melihat dan mengubah profil Anda.</p>
                 <button
                   onClick={() => router.push("/auth/login")}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-xl transition duration-300"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl transition duration-300"
                 >
                   Login Sekarang
                 </button>
@@ -231,7 +231,7 @@ const ProfilePage: React.FC = () => {
                 value={newPhotoUrl}
                 onChange={(e) => setNewPhotoUrl(e.target.value)}
                 placeholder="https://example.com/photo.jpg"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
               <p className="text-xs text-gray-500 mt-2">Untuk saat ini, silakan masukkan URL gambar foto profil Anda.</p>
             </div>
@@ -247,7 +247,7 @@ const ProfilePage: React.FC = () => {
               <button 
                 onClick={handlePhotoUploadSubmit}
                 disabled={isUploading}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-300 disabled:opacity-50 flex items-center justify-center"
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-300 disabled:opacity-50 flex items-center justify-center"
               >
                 {isUploading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>

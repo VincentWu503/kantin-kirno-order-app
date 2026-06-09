@@ -157,9 +157,6 @@ function AddToCartPromptDialog({ menu, quantity, handleQuantityChange, handleClo
 }
 
 export default function HomePage() {
-  const loggedInImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg";
-  const guestImage = "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg";
-
   const OFFSET_DEFAULT = 0;
   const LIMIT_DEFAULT = 8;
   const TIMEOUT_MS = 500;
@@ -168,12 +165,6 @@ export default function HomePage() {
   const [, setError] = useState<Error | null>(null);
 
   const { isLoggedIn, getUserPayload } = useAuth();
-  const [profile, setProfile] = useState({
-    name: "User",
-    profileUrl: loggedInImage,
-  })
-
-
 
   const [loginDialogOpen, setLoginDialog] = useState(false);
 
@@ -188,7 +179,6 @@ export default function HomePage() {
   const [currentMenu, setCurrentMenu] = useState<MenuData | null>(null);
   const [menuQuantity, setQuantity] = useState(1);
 
-  const [menuCount, setMenuCount] = useState(0);
   const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
@@ -263,30 +253,6 @@ export default function HomePage() {
   }
 
   useEffect(() => setQuantity(1), [currentMenu]);
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (isLoggedIn && accessToken) {
-        try {
-          // biar gk hit api tiap saat (panggil endpoint profile di profile saja)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = getUserPayload() as any; // gak peduli w
-          if (data) {
-            setProfile({
-              name: data.username || profile.name,
-              profileUrl: data.profile_image_url || profile.profileUrl
-            });
-          }
-        } catch (err: unknown) {
-          // bakal dihandle sama error.tsx root layout
-          setError(() => {
-            throw err;
-          })
-        }
-      }
-    };
-
-    loadProfile();
-  }, [isLoggedIn, accessToken]);
 
   useEffect(() => {
     const menuData = async () => {
@@ -313,70 +279,8 @@ export default function HomePage() {
     menuData();
   }, [offset, limit, search]);
 
-  useEffect(() => {
-    async function doProcess() {
-      if (currentMenu == null) {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        try {
-          const response = await fetchCartItems(token) as ResponseObject;
-          const data = response.data as CartResponseData;
-          if (response && response.data) {
-            setMenuCount(data!.items?.length || 0)
-          }
-        } catch (err) {
-          setError(() => {
-            throw err;
-          })
-        }
-      }
-    }
-    doProcess();
-  }, [currentMenu, isLoggedIn]);
-
   return (
     <div className="min-h-screen bg-white ">
-      {/* Header */}
-      <header className="flex justify-between items-center px-4 py-3 md:px-6 md:py-4 border-b bg-white sticky top-0 z-30">
-        <div className="flex items-center gap-3 md:gap-4">
-          {/* Profile Image Logic */}
-          <div className="relative w-10 h-10 md:w-14 md:h-14 overflow-hidden rounded-full border-2 border-gray-100 shadow-sm">
-            <Image
-              src={isLoggedIn ? profile.profileUrl : guestImage}
-              alt="Profile"
-              fill
-              loading="eager"
-              sizes="(max-width: 768px) 40px, 56px"
-              className="object-cover"
-            />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-sm md:text-xl font-bold text-black leading-tight">
-              {isLoggedIn ? `Halo, ${profile.name}` : "Sahera Pak Kirno"}
-            </h1>
-            {isLoggedIn && <span className="text-[10px] md:text-xs text-gray-500">Selamat Makan!</span>}
-          </div>
-        </div>
-
-        <div>
-          {isLoggedIn ? (
-            <Badge color="secondary" badgeContent={menuCount}>
-              <Link href="/cart" className="p-2 md:p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all shadow-md active:scale-90 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 md:w-6 md:h-6">
-                  <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
-                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                </svg>
-              </Link>
-            </Badge>
-          ) : (
-            <Link href="/auth/login" className="px-5 md:px-8 py-2 md:py-2.5 bg-blue-500 text-white rounded-full font-bold text-sm md:text-base hover:bg-blue-600 transition-all shadow-sm active:scale-95">
-              Login
-            </Link>
-          )}
-        </div>
-      </header>
-
       {/* Search Bar */}
       <div className="px-4 py-3 md:px-6 md:py-4 lg:w-lg md:w-md sm:w-sm xl:w-xl mx-auto">
         <div className="relative">

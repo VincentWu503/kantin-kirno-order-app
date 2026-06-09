@@ -446,17 +446,19 @@ export default function CartPage() {
                             <span className="block">Biaya Makanan</span>
                             <span className="block font-semibold">{formatIDR(subtotalPrice)}</span>
                         </div>
-                        <div className="flex justify-between text-sm md:text-base">
-                            <span className="flex items-center gap-1">Biaya Pengiriman
-                                <Tooltip
-                                    describeChild
-                                    title="Biaya admin dihitung berdasarkan lokasi pengiriman pesanan"
-                                >
-                                    <Error fontSize="small" color="disabled" />
-                                </Tooltip>
-                            </span>
-                            <span className="block font-semibold">{deliveryFee == 0 ? "Gratis" : formatIDR(deliveryFee)}</span>
-                        </div>
+                        {deliveryFee > 0 && (
+                            <div className="flex justify-between text-sm md:text-base">
+                                <span className="flex items-center gap-1">Biaya Pengiriman
+                                    <Tooltip
+                                        describeChild
+                                        title="Biaya admin dihitung berdasarkan lokasi pengiriman pesanan"
+                                    >
+                                        <Error fontSize="small" color="disabled" />
+                                    </Tooltip>
+                                </span>
+                                <span className="block font-semibold">{formatIDR(deliveryFee)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between font-bold text-lg md:text-2xl pt-2 border-t border-gray-300">
                             <span className="block">Total</span>
                             <span className="block text-green-600">{formatIDR(subtotalPrice + deliveryFee)}</span>

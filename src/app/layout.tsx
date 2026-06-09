@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AuthProvider } from "../context/AuthContext";
 import Navbar from "@/components/navbar";
+import TopHeader from "@/components/TopHeader";
 import LoadingScreen from "@/components/loading";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -41,9 +42,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!isAuthPage && <Navbar />}
-      <main className={`${!isAuthPage ? "pb-20 md:pb-0 md:pt-16" : ""}`}>
-        {children}
-      </main>
+      <div className={`${!isAuthPage ? "md:ml-16 flex flex-col min-h-screen" : ""}`}>
+        {!isAuthPage && <TopHeader />}
+        <main className={`flex-1 ${!isAuthPage ? "pb-20 md:pb-0" : ""}`}>
+          {children}
+        </main>
+      </div>
     </>
   );
 }

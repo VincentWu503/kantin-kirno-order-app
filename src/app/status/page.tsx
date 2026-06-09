@@ -82,13 +82,30 @@ export default function StatusPage() {
     const [error, setError] = useState<Error | null>(null);
     const [activeTab, setActiveTab] = useState<"ongoing" | "history">("ongoing");
 
-    useEffect(() => {
-        if (!authLoading && !isLoggedIn) {
-            sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk melihat riwayat!');
-            window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
-            router.replace("/");
-        }
-    }, [isLoggedIn, authLoading, router]);
+    if (!authLoading && !isLoggedIn) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-3">Anda belum login</h1>
+                    <p className="text-gray-500 mb-8">
+                        Silakan login terlebih dahulu untuk melihat riwayat dan status pesanan Anda.
+                    </p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors active:scale-95"
+                    >
+                        Kembali ke Menu
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     useEffect(() => {
         if (!isLoggedIn) return;
