@@ -12,7 +12,7 @@ import { fetchRestaurantStatus } from "@/lib/restaurant";
 import { ResponseObject } from "@/utils/interfaces";
 import { fetchCreateOrder } from "@/lib/order";
 import { useRouter } from "next/navigation";
-import {SESSION_STORAGE_EVENT} from "@/hooks/useSnackbarMessage"
+import {SESSION_STORAGE_EVENT} from "@/utils/constants"
 
 // <MenuItem value="Utama">Utama</MenuItem>
 // <MenuItem value="M">M</MenuItem>
