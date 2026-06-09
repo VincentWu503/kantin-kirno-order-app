@@ -3,14 +3,14 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchUser } from "@/lib/users";
-import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
+import { SESSION_STORAGE_EVENT } from "@/utils/constants";
 
 export default function EditProfilePage() {
   const router = useRouter();
   const { isLoggedIn, isLoading } = useAuth();
   
   const [username, setUsername] = useState("");
-  const [nim, setNim] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [profileImage, setProfileImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,7 +32,7 @@ export default function EditProfilePage() {
         if (result.status === 200) {
           const data = result.data as any;
           setUsername(data.username || "");
-          setNim(data.phone_no || "");
+          setPhoneNumber(data.phone_no || "");
           setProfileImage(data.profile_image_url || "");
         }
       } catch (err) {
@@ -53,7 +53,7 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/user/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +61,7 @@ export default function EditProfilePage() {
         },
         body: JSON.stringify({
           username: username,
-          phone_number: nim,
+          phone_number: phoneNumber,
           profile_image_url: profileImage
         })
       });
@@ -132,14 +132,14 @@ export default function EditProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                NIM
+                Nomor HP
               </label>
               <input
                 type="text"
-                value={nim}
-                onChange={(e) => setNim(e.target.value)}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white transition outline-none"
-                placeholder="Masukkan NIM Anda (opsional)"
+                placeholder="Masukkan Nomor HP Anda (opsional)"
               />
               <p className="text-xs text-gray-500 mt-2">Dapat dibiarkan kosong jika tidak ada.</p>
             </div>
