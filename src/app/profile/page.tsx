@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { handleLogoutApi, fetchUser } from "@/lib/users";
+import { ENV } from "@/config/env";
 
 const ProfilePage: React.FC = () => {
   const { isLoggedIn, logout, getUserPayload, setIsNavigating } = useAuth();
@@ -10,11 +11,11 @@ const ProfilePage: React.FC = () => {
   
   const [profile, setProfile] = useState<{
     namaPelanggan: string;
-    nim: string;
+    nomorHp: string;
     profileImageUrl: string;
   }>({
     namaPelanggan: "Guest",
-    nim: "-",
+    nomorHp: "-",
     profileImageUrl: "",
   });
 
@@ -33,7 +34,7 @@ const ProfilePage: React.FC = () => {
           const data = result.data as any;
           setProfile({
             namaPelanggan: data.username || "Tanpa Nama",
-            nim: data.phone_no || "",
+            nomorHp: data.phone_no || "",
             profileImageUrl: data.profile_image_url || "",
           });
         }
@@ -42,7 +43,7 @@ const ProfilePage: React.FC = () => {
         if (payload) {
           setProfile({
             namaPelanggan: payload.username || "Tanpa Nama",
-            nim: "",
+            nomorHp: "",
             profileImageUrl: payload.profile_image_url || "",
           });
         }
@@ -87,7 +88,7 @@ const ProfilePage: React.FC = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/user/profile`, {
+      const response = await fetch(`${ENV.API_URL}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +96,7 @@ const ProfilePage: React.FC = () => {
         },
         body: JSON.stringify({
           username: profile.namaPelanggan,
-          phone_number: profile.nim,
+          phone_number: profile.nomorHp,
           profile_image_url: newPhotoUrl
         })
       });
@@ -167,7 +168,7 @@ const ProfilePage: React.FC = () => {
               {profile.namaPelanggan}
             </h2>
             <p className="text-sm font-medium text-gray-500">
-              NIM: {profile.nim || "Belum diisi"}
+              Nomor HP: {profile.nomorHp || "Belum diisi"}
             </p>
           </div>
 

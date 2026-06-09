@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchUserOrders } from "@/lib/order";
 import { formatIDR } from "@/utils/utils";
 import { ORDER_STATUS_MAP } from "@/utils/types";
-import { SESSION_STORAGE_EVENT } from "@/hooks/useSnackbarMessage";
+import { SESSION_STORAGE_EVENT } from "@/utils/constants";
 
 interface OrderItem {
     // menu_id: number,

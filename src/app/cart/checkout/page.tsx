@@ -274,6 +274,7 @@ export default function CartPage() {
         async function doProcess() {
             //set forms
             const data = getUserPayload() as unknown as any;
+            console.log(data)
             setPhone(data.phone_no || "+62");
             setName(data.username || "");
 
