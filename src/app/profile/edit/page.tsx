@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchUser } from "@/lib/users";
 import { SESSION_STORAGE_EVENT } from "@/utils/constants";
+import { ENV } from "@/config/env";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/profile`, {
+      const response = await fetch(`${ENV.API_URL}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
