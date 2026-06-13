@@ -97,9 +97,11 @@ export default function EditProfilePage() {
         const uploadFormData = new FormData();
         uploadFormData.append("profile_image", profileImageFile);
 
-        const baseUrl = `${ENV.API_URL}`.replace(/\/+$/, "");
+        const apiBase = `${ENV.API_URL}`.replace(/\/+$/, "");
+        const apiBaseNormalized = apiBase.endsWith("/api") ? apiBase : `${apiBase}/api`;
+
         const uploadResponse = await fetch(
-          `${baseUrl}${baseUrl.endsWith("/api") ? "" : "/api"}/auth/user/profile-image`,
+          `${apiBaseNormalized}/auth/user/profile-image`,
           {
             method: "POST",
             headers: {
