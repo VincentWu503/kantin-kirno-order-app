@@ -94,7 +94,7 @@ export default function EditProfilePage() {
       <div className="w-full max-w-md md:max-w-lg bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         
         {/* Header Section */}
-        <div className="bg-orange-500 py-6 px-6 relative flex items-center">
+        <div className="bg-blue-500 py-6 px-6 relative flex items-center">
           <button 
             onClick={() => router.back()} 
             className="text-white hover:bg-orange-600 p-2 rounded-full transition absolute left-4"
@@ -126,7 +126,7 @@ export default function EditProfilePage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white transition outline-none"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
                 placeholder="Masukkan nama lengkap Anda"
               />
             </div>
@@ -139,17 +139,31 @@ export default function EditProfilePage() {
                 type="text"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:bg-white transition outline-none"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
                 placeholder="Masukkan Nomor HP Anda (opsional)"
               />
               <p className="text-xs text-gray-500 mt-2">Dapat dibiarkan kosong jika tidak ada.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                URL Foto Profil
+              </label>
+              <input
+                type="text"
+                value={profileImage}
+                onChange={(e) => setProfileImage(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
+                placeholder="https://example.com/photo.jpg"
+              />
+              <p className="text-xs text-gray-500 mt-2">Untuk saat ini, silakan masukkan URL gambar foto profil Anda.</p>
             </div>
 
             <div className="pt-4">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-4 rounded-xl transition duration-300 disabled:opacity-50 flex items-center justify-center shadow-sm"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl transition duration-300 disabled:opacity-50 flex items-center justify-center shadow-sm"
               >
                 {isSubmitting ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>

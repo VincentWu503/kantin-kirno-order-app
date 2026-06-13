@@ -167,6 +167,8 @@ export default function CartPage() {
         }
 
         async function doProcess() {
+            const statusData = await fetchRestaurantStatus();
+            setIsOpen(statusData.status);
             await refreshCart();
             setLoading(false);
         }
@@ -274,18 +276,37 @@ export default function CartPage() {
             />
 
             {/* tombol checkout */}
-            <div className="flex justify-center flex-row gap-4 max-w-7xl mx-auto">
-                {cart && cart.items.length > 0 ? (
-                    <Link href="/cart/checkout" className="flex-1">
-                        <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
+            <div className="flex flex-col gap-4 max-w-7xl mx-auto">
+                <div className={`text-center text-sm md:text-base font-semibold rounded-full px-2 py-1 ${isOpen ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
+                    {isOpen ? "✓ Kantin sedang buka" : "✗ Kantin sedang tutup dan tidak melayani secara online"}
+                </div>
+                <div className="flex justify-center flex-row gap-4">
+                    {cart && cart.items.length > 0 && isOpen ? (
+                        <Link href="/cart/checkout" className="flex-1">
+                            <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                                Checkout
+                            </button>
+                        </Link>
+                    ) : ( // button gak bisa click kalo cart kosong atau kantin tutup
+                        <button disabled className={`${montserrat.className} w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
                             Checkout
                         </button>
-                    </Link>
-                ) : ( // button gak bisa click kalo cart kosong
-                    <button disabled className={`${montserrat.className} w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
-                        Checkout
-                    </button>
-                )}
+                    )}
+                </div>
+            </div>
+            {/* <Button 
+                variant="contained" 
+                className={`${montserrat.className} bg-green-600 text-2xl rounded-full`}
+                >
+                Checkout
+            </Button> */}
+        </div>
+
+    );
+}kout
+                        </button>
+                    )}
+                </div>
             </div>
             {/* <Button 
                 variant="contained" 

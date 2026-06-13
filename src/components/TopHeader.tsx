@@ -9,15 +9,53 @@ import { CartResponseData } from "@/utils/types";
 import { ResponseObject } from "@/utils/interfaces";
 
 export default function TopHeader() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, getUserPayload } = useAuth();
   const [menuCount, setMenuCount] = useState(0);
+  const [profile, setProfile] = useState<{ username: string; imageUrl: string }>({
+    username: "",
+    imageUrl: "",
+  });
 
   useEffect(() => {
     async function fetchCartCount() {
       if (!isLoggedIn) return;
       
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        const payload = getUserPayload();
+        if (payload) {
+          setProfile({
+            username: payload.username || "User",
+            imageUrl: payload.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+          });
+        }
+        return;
+      }
+
+      // Default fallback payload first
+      const payload = getUserPayload();
+      if (payload) {
+        setProfile({
+          username: payload.username || "User",
+          imageUrl: payload.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+        });
+      }
+
+      // Try fetching updated user info (Optional if you want it fresh on load)
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/user/profile`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+           const data = await res.json();
+           setProfile({
+             username: data.data?.username || "User",
+             imageUrl: data.data?.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+           });
+        }
+      } catch (err) {
+        // ignore error
+      }
 
       try {
         const response = await fetchCartItems(token) as ResponseObject;
@@ -31,12 +69,27 @@ export default function TopHeader() {
     }
     
     fetchCartCount();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, getUserPayload]);
 
   return (
     <header className="flex justify-between items-center px-4 py-2 md:px-6 md:py-2 border-b bg-white sticky top-0 z-30 h-14 md:h-16">
-      {/* Empty Left Side to Balance Center */}
-      <div className="flex-1"></div>
+      {/* Left Side: Profile (Mobile) / Empty (Desktop) */}
+      <div className="flex-1 flex justify-start items-center">
+        {isLoggedIn && profile.username && (
+          <Link href="/profile" className="flex items-center gap-2 md:hidden">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+              <img 
+                src={profile.imageUrl || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-800 line-clamp-1 max-w-[80px]">
+              {profile.username}
+            </span>
+          </Link>
+        )}
+      </div>
 
       {/* Center Logo */}
       <div className="flex-1 flex justify-center">

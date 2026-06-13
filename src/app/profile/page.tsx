@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { handleLogoutApi, fetchUser } from "@/lib/users";
-import { ENV } from "@/config/env";
 
 const ProfilePage: React.FC = () => {
-  const { isLoggedIn, logout, getUserPayload, setIsNavigating } = useAuth();
+  const { isLoggedIn, logout, getUserPayload } = useAuth();
   const router = useRouter();
   
   const [profile, setProfile] = useState<{
@@ -20,10 +19,6 @@ const ProfilePage: React.FC = () => {
   });
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [isPhotoPopupOpen, setIsPhotoPopupOpen] = useState(false);
-  const [newPhotoUrl, setNewPhotoUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   const fetchProfileData = async () => {
     try {
@@ -57,6 +52,7 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     fetchProfileData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
   const onLogout = async () => {
@@ -75,45 +71,6 @@ const ProfilePage: React.FC = () => {
 
   const handleEditProfileClick = () => {
     router.push("/profile/edit");
-  };
-
-  const handlePhotoUploadSubmit = async () => {
-    if (!newPhotoUrl.trim()) {
-      setErrorMsg("URL gambar tidak boleh kosong");
-      return;
-    }
-    setIsUploading(true);
-    setErrorMsg("");
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      
-      const response = await fetch(`${ENV.API_URL}/auth/user/profile`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          username: profile.namaPelanggan,
-          phone_number: profile.nomorHp,
-          profile_image_url: newPhotoUrl
-        })
-      });
-
-      if (response.ok || response.status === 204) {
-        setProfile((prev) => ({ ...prev, profileImageUrl: newPhotoUrl }));
-        setIsPhotoPopupOpen(false);
-        setNewPhotoUrl("");
-      } else {
-        setErrorMsg("Gagal memperbarui foto profil");
-      }
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Terjadi kesalahan sistem");
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   if (isLoadingProfile && isLoggedIn) {
@@ -140,25 +97,13 @@ const ProfilePage: React.FC = () => {
           {/* Avatar Area */}
           <div className="flex justify-center -mt-16 mb-4 relative">
             <div 
-              className="relative w-32 h-32 rounded-full border-4 border-white bg-gray-200 shadow-md cursor-pointer group flex items-center justify-center overflow-hidden"
-              onClick={() => {
-                if (isLoggedIn) setIsPhotoPopupOpen(true);
-              }}
+              className="relative w-32 h-32 rounded-full border-4 border-white bg-gray-200 shadow-md flex items-center justify-center overflow-hidden"
             >
               <img 
                 src={profile.profileImageUrl || (isLoggedIn ? "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg" : "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628048/samples/shoe.jpg")} 
                 alt="Profile" 
                 className="w-full h-full object-cover"
               />
-              
-              {/* Hover Overlay */}
-              {isLoggedIn && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </div>
-              )}
             </div>
           </div>
 
@@ -212,54 +157,6 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Photo Upload Popup */}
-      {isPhotoPopupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 transition-opacity">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Ubah Foto Profil</h3>
-            
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded">
-                {errorMsg}
-              </div>
-            )}
-
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL Gambar Baru</label>
-              <input 
-                type="text" 
-                value={newPhotoUrl}
-                onChange={(e) => setNewPhotoUrl(e.target.value)}
-                placeholder="https://example.com/photo.jpg"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-              <p className="text-xs text-gray-500 mt-2">Untuk saat ini, silakan masukkan URL gambar foto profil Anda.</p>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button 
-                onClick={() => setIsPhotoPopupOpen(false)}
-                disabled={isUploading}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2.5 px-4 rounded-xl transition duration-300 disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handlePhotoUploadSubmit}
-                disabled={isUploading}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-300 disabled:opacity-50 flex items-center justify-center"
-              >
-                {isUploading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                ) : (
-                  "Simpan"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

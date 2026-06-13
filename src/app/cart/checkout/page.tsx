@@ -110,7 +110,7 @@ export default function CartPage() {
         location: false,
     });
 
-    const cannotOrder = error.phone || !isOpen || !checked || (takeaway ? false : (error.location));
+    const cannotOrder = error.phone || !checked || (takeaway ? false : (error.location));
     const [modalShow, setModalShow] = useState<boolean>(false);
 
     useEffect(() => {
@@ -122,13 +122,6 @@ export default function CartPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setError({ ...error, location: location.building.length == 0 || location.floor.length == 0 });
     }, [location])
-
-    useEffect(() => {
-        async function doFunction() {
-            setIsOpen((await fetchRestaurantStatus())!.status);
-        }
-        doFunction();
-    }, []);
 
     useEffect(() => {
         const fee = countDeliveryFee();
@@ -479,15 +472,22 @@ export default function CartPage() {
                     >
                         Bayar Pesanan &rarr;
                     </button>
-                    <div className={`text-center text-sm md:text-base font-semibold rounded-full px-2 py-1 ${isOpen ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
-                        {isOpen ? "✓ Kantin sedang buka" : "✗ Kantin sedang tutup dan tidak melayani secara online"}
-                    </div>
                 </div>
             </div>
 
             <ConfirmModal
                 open={modalShow}
                 handleClose={() => setModalShow(false)}
+                location={location}
+                takeaway={takeaway}
+                notes={notes}
+                price={subtotalPrice || 0 + deliveryFee || 0}
+                handleConfirm={handleButtonConfirm}
+            />
+
+        </div >
+    );
+}e)}
                 location={location}
                 takeaway={takeaway}
                 notes={notes}
