@@ -13,9 +13,8 @@ export default function EditProfilePage() {
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState("");
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(
-    null,
-  );
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -60,7 +59,15 @@ export default function EditProfilePage() {
     }
   }, [isLoggedIn]);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
+  useEffect(() => {
+    return () => {
+      if (profileImagePreview) {
+        URL.revokeObjectURL(profileImagePreview);
+      }
+    };
+  }, [profileImagePreview]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
@@ -81,7 +88,6 @@ export default function EditProfilePage() {
         const baseUrl = `${ENV.API_URL}`.replace(/\/+$/, "");
         const uploadResponse = await fetch(
           `${baseUrl}${baseUrl.endsWith("/api") ? "" : "/api"}/auth/user/profile-image`,
-
           {
             method: "POST",
             headers: {
@@ -100,7 +106,7 @@ export default function EditProfilePage() {
           );
         }
 
-const uploadData = await uploadResponse.json();
+        const uploadData = await uploadResponse.json();
         const nextUrl = uploadData?.profile_image_url;
 
         if (typeof nextUrl !== "string" || nextUrl.trim() === "") {
@@ -220,15 +226,33 @@ const uploadData = await uploadResponse.json();
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0] || null;
+
+                  if (profileImagePreview) {
+                    URL.revokeObjectURL(profileImagePreview);
+                  }
+
                   setProfileImageFile(file);
+                  setProfileImagePreview(file ? URL.createObjectURL(file) : "");
                 }}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
               />
 
-              {profileImageUrl ? (
-                <p className="text-xs text-gray-500 mt-2">
-                  Foto saat ini: tersedia
-                </p>
+              {(profileImagePreview || profileImageUrl) ? (
+                <div className="mt-4 flex items-center gap-4">
+                  <img
+                    src={profileImagePreview || profileImageUrl}
+                    alt="Preview Foto Profil"
+                    className="w-20 h-20 rounded-full object-cover border border-gray-200"
+                  />
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      {profileImagePreview ? "Preview foto baru" : "Foto saat ini"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Pilih file baru jika ingin mengganti foto profil.
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <p className="text-xs text-gray-500 mt-2">
                   Anda belum memiliki foto profil.
