@@ -78,8 +78,10 @@ export default function EditProfilePage() {
         const uploadFormData = new FormData();
         uploadFormData.append("profile_image", profileImageFile);
 
+        const baseUrl = `${ENV.API_URL}`.replace(/\/+$/, "");
         const uploadResponse = await fetch(
-          `${ENV.API_URL}/auth/user/profile-image`,
+          `${baseUrl}${baseUrl.endsWith("/api") ? "" : "/api"}/auth/user/profile-image`,
+
           {
             method: "POST",
             headers: {
