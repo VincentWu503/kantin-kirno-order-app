@@ -26,14 +26,19 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      login((data.data as any).token);
+      // avoid `any` by only using typed access
+      const token =
+        typeof (data?.data as Record<string, unknown>)?.token === "string"
+          ? ((data.data as Record<string, unknown>)?.token as string)
+          : "";
+      login(token);
       router.push("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Detail Error:", err);
 
       // pastikan error yg dilempar fetchWrapper berbentuk json, biar ini gk error
-      const errData = JSON.parse(err.message);
+      const errMessage = err instanceof Error ? err.message : String(err);
+      const errData = JSON.parse(errMessage);
 
       setErrorMessage(errData.message || "Terjadi kesalahan saat percobaan login!");
       // setError(() => {
@@ -92,6 +97,14 @@ export default function LoginPage() {
               className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
+
+            <div className="mt-2 text-[11px] leading-4 text-gray-500">
+              <div className="font-semibold text-gray-700">Ketentuan password:</div>
+              <ul className="list-disc pl-5">
+                <li>Minimal 12 karakter (maks 30)</li>
+                <li>Harus ada huruf besar, huruf kecil, angka, dan spesial <span className="font-mono">#@$!%*?&</span></li>
+              </ul>
+            </div>
           </div>
 
           <div className="flex flex-col text-gray-500 mb-0">

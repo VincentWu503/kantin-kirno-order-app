@@ -84,8 +84,9 @@ export default function EditProfilePage() {
     setIsSubmitting(true);
     setErrorMsg("");
 
-    // simpan nilai lama untuk rollback jika PATCH gagal
+    // simpan nilai lama untuk rollback jika upload/PATCH gagal
     const oldProfileImageUrl = profileImageUrl;
+    const oldPreview = profileImagePreview;
 
     try {
       const token = localStorage.getItem("token");
@@ -97,13 +98,10 @@ export default function EditProfilePage() {
         const uploadFormData = new FormData();
         uploadFormData.append("profile_image", profileImageFile);
 
-        const rawApiUrl = `${ENV.API_URL}`.replace(/\/+$/, "");
-        const apiUrl = rawApiUrl.endsWith("/api")
-          ? rawApiUrl
-          : `${rawApiUrl}/api`;
+        const apiBase = `${ENV.API_URL}`.replace(/\/+$/, "");
 
         const uploadResponse = await fetch(
-          `${apiUrl}/auth/user/profile-image`,
+          `${apiBase}/auth/user/profile-image`,
           {
             method: "POST",
             headers: {
@@ -152,6 +150,10 @@ export default function EditProfilePage() {
       });
 
       if (response.ok || response.status === 204) {
+        // Sinkronkan preview dengan hasil yang tersimpan (URL terbaru).
+        setProfileImageUrl(updatedProfileImageUrl);
+        setProfileImagePreview("");
+        setProfileImageFile(null);
         router.push("/profile");
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -159,6 +161,8 @@ export default function EditProfilePage() {
 
         // rollback UI agar image tidak terlihat berubah saat update gagal
         setProfileImageUrl(oldProfileImageUrl);
+        setProfileImagePreview(oldPreview);
+        setProfileImageFile(null);
       }
     } catch (err) {
       console.error(err);
@@ -166,6 +170,8 @@ export default function EditProfilePage() {
 
       // rollback UI agar image tidak terlihat berubah saat error
       setProfileImageUrl(oldProfileImageUrl);
+      setProfileImagePreview(oldPreview);
+      setProfileImageFile(null);
     } finally {
       setIsSubmitting(false);
     }

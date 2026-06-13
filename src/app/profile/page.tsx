@@ -26,11 +26,15 @@ const ProfilePage: React.FC = () => {
       if (token) {
         const result = await fetchUser(token);
         if (result.status === 200) {
-          const data = result.data as any;
+          const data = result.data as Record<string, unknown>;
           setProfile({
-            namaPelanggan: data.username || "Tanpa Nama",
-            nomorHp: data.phone_no || "",
-            profileImageUrl: data.profile_image_url || "",
+            namaPelanggan:
+              typeof data.username === "string" ? data.username : "Tanpa Nama",
+            nomorHp: typeof data.phone_no === "string" ? data.phone_no : "",
+            profileImageUrl:
+              typeof data.profile_image_url === "string"
+                ? data.profile_image_url
+                : "",
           });
         }
       } else {
