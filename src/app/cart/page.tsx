@@ -124,6 +124,7 @@ export default function CartPage() {
     // auth
     const { isLoggedIn, getUserPayload } = useAuth();
     const [isLoading, setLoading] = useState<boolean>(true);
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const [cart, setCart] = useState<CartResponseData | null>();
     const [totalPrice, setTotalPrice] = useState<number | null>();
@@ -290,20 +291,6 @@ export default function CartPage() {
                     ) : ( // button gak bisa click kalo cart kosong atau kantin tutup
                         <button disabled className={`${montserrat.className} w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
                             Checkout
-                        </button>
-                    )}
-                </div>
-            </div>
-            {/* <Button 
-                variant="contained" 
-                className={`${montserrat.className} bg-green-600 text-2xl rounded-full`}
-                >
-                Checkout
-            </Button> */}
-        </div>
-
-    );
-}kout
                         </button>
                     )}
                 </div>
