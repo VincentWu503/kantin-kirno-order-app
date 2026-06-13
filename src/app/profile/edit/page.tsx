@@ -37,14 +37,19 @@ export default function EditProfilePage() {
         if (!token) return;
         const result = await fetchUser(token);
         if (result.status === 200) {
-          const data = result.data as {
-            username?: string;
-            phone_no?: string;
-            profile_image_url?: string;
-          };
-          setUsername(data.username || "");
-          setPhoneNumber(data.phone_no || "");
-          setProfileImageUrl(data.profile_image_url || "");
+          const data = result.data as Record<string, unknown>;
+          const usernameValue =
+            typeof data.username === "string" ? data.username : "";
+          const phoneNoValue =
+            typeof data.phone_no === "string" ? data.phone_no : "";
+          const profileImageValue =
+            typeof data.profile_image_url === "string"
+              ? data.profile_image_url
+              : "";
+
+          setUsername(usernameValue);
+          setPhoneNumber(phoneNoValue);
+          setProfileImageUrl(profileImageValue);
         }
       } catch (err) {
         console.error("Failed to load profile", err);
@@ -59,6 +64,9 @@ export default function EditProfilePage() {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg("");
+
+    // simpan nilai lama untuk rollback jika PATCH gagal
+    const oldProfileImageUrl = profileImageUrl;
 
     try {
       const token = localStorage.getItem("token");
@@ -112,10 +120,16 @@ export default function EditProfilePage() {
       } else {
         const errorData = await response.json().catch(() => ({}));
         setErrorMsg(errorData.message || "Gagal memperbarui profil.");
+
+        // rollback UI agar image tidak terlihat berubah saat update gagal
+        setProfileImageUrl(oldProfileImageUrl);
       }
     } catch (err) {
       console.error(err);
       setErrorMsg("Terjadi kesalahan pada sistem.");
+
+      // rollback UI agar image tidak terlihat berubah saat error
+      setProfileImageUrl(oldProfileImageUrl);
     } finally {
       setIsSubmitting(false);
     }
