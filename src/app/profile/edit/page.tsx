@@ -67,6 +67,18 @@ export default function EditProfilePage() {
     };
   }, [profileImagePreview]);
 
+  const parseErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      try {
+        const parsed = JSON.parse(error.message);
+        return parsed.message || parsed.description || error.message;
+      } catch {
+        return error.message;
+      }
+    }
+    return String(error || "Terjadi kesalahan pada sistem.");
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -110,8 +122,11 @@ export default function EditProfilePage() {
         const nextUrl = uploadData?.profile_image_url;
 
         if (typeof nextUrl !== "string" || nextUrl.trim() === "") {
+          const fallbackMessage =
+            typeof uploadData?.message === "string" ? uploadData.message : "";
+
           throw new Error(
-            uploadData?.message ||
+            fallbackMessage ||
               "Upload berhasil tetapi URL foto profil tidak didapatkan.",
           );
         }
@@ -143,7 +158,7 @@ export default function EditProfilePage() {
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg("Terjadi kesalahan pada sistem.");
+      setErrorMsg(parseErrorMessage(err));
 
       // rollback UI agar image tidak terlihat berubah saat error
       setProfileImageUrl(oldProfileImageUrl);
