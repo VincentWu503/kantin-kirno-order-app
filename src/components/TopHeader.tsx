@@ -3,13 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Badge } from "@mui/material";
 import { fetchCartItems } from "@/lib/cart";
+import { fetchUser } from "@/lib/users";
 import { CartResponseData } from "@/utils/types";
 import { ResponseObject } from "@/utils/interfaces";
 
 export default function TopHeader() {
   const { isLoggedIn, getUserPayload } = useAuth();
+  const pathname = usePathname();
   const [menuCount, setMenuCount] = useState(0);
   const [profile, setProfile] = useState<{ username: string; imageUrl: string }>({
     username: "",
@@ -25,8 +28,8 @@ export default function TopHeader() {
         const payload = getUserPayload();
         if (payload) {
           setProfile({
-            username: payload.username || "User",
-            imageUrl: payload.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+            username: payload.username || "Tanpa Nama",
+            imageUrl: payload.profile_image_url || ""
           });
         }
         return;
@@ -36,22 +39,20 @@ export default function TopHeader() {
       const payload = getUserPayload();
       if (payload) {
         setProfile({
-          username: payload.username || "User",
-          imageUrl: payload.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
+          username: payload.username || "Tanpa Nama",
+          imageUrl: payload.profile_image_url || ""
         });
       }
 
       // Try fetching updated user info (Optional if you want it fresh on load)
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/user/profile`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (res.ok) {
-           const data = await res.json();
-           setProfile({
-             username: data.data?.username || "User",
-             imageUrl: data.data?.profile_image_url || "https://res.cloudinary.com/dmzqupudd/image/upload/v1775628039/samples/animals/cat.jpg"
-           });
+        const result = await fetchUser(token);
+        if (result.status === 200) {
+          const data = result.data as any;
+          setProfile({
+            username: data.username || "Tanpa Nama",
+            imageUrl: data.profile_image_url || ""
+          });
         }
       } catch (err) {
         // ignore error
@@ -69,7 +70,7 @@ export default function TopHeader() {
     }
     
     fetchCartCount();
-  }, [isLoggedIn, getUserPayload]);
+  }, [isLoggedIn, getUserPayload, pathname]);
 
   return (
     <header className="flex justify-between items-center px-4 py-2 md:px-6 md:py-2 border-b bg-white sticky top-0 z-30 h-14 md:h-16">

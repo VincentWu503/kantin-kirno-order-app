@@ -9,18 +9,24 @@ import { ENV } from "@/config/env";
 export default function EditProfilePage() {
   const router = useRouter();
   const { isLoggedIn, isLoading } = useAuth();
-  
+
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [profileImage, setProfileImage] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
-      sessionStorage.setItem('error', 'Anda harus login terlebih dahulu untuk mengedit profil!')
+      sessionStorage.setItem(
+        "error",
+        "Anda harus login terlebih dahulu untuk mengedit profil!",
+      );
       window.dispatchEvent(new Event(SESSION_STORAGE_EVENT));
-      router.replace('/profile');
+      router.replace("/profile");
     }
   }, [isLoading, isLoggedIn, router]);
 
@@ -31,10 +37,14 @@ export default function EditProfilePage() {
         if (!token) return;
         const result = await fetchUser(token);
         if (result.status === 200) {
-          const data = result.data as any;
+          const data = result.data as {
+            username?: string;
+            phone_no?: string;
+            profile_image_url?: string;
+          };
           setUsername(data.username || "");
           setPhoneNumber(data.phone_no || "");
-          setProfileImage(data.profile_image_url || "");
+          setProfileImageUrl(data.profile_image_url || "");
         }
       } catch (err) {
         console.error("Failed to load profile", err);
@@ -54,17 +64,47 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
+      let updatedProfileImageUrl = profileImageUrl;
+
+      if (profileImageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("profile_image", profileImageFile);
+
+        const uploadResponse = await fetch(
+          `${ENV.API_URL}/auth/user/profile-image`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: uploadFormData,
+          },
+        );
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse
+            .json()
+            .catch(() => ({}));
+          throw new Error(
+            errorData.message || "Gagal mengupload foto profil.",
+          );
+        }
+
+        const uploadData = await uploadResponse.json();
+        updatedProfileImageUrl = uploadData.profile_image_url;
+      }
+
       const response = await fetch(`${ENV.API_URL}/auth/user/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           username: username,
           phone_number: phoneNumber,
-          profile_image_url: profileImage
-        })
+          profile_image_url: updatedProfileImageUrl,
+        }),
       });
 
       if (response.ok || response.status === 204) {
@@ -147,16 +187,32 @@ export default function EditProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                URL Foto Profil
+                Foto Profil
               </label>
+
               <input
-                type="text"
-                value={profileImage}
-                onChange={(e) => setProfileImage(e.target.value)}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setProfileImageFile(file);
+                }}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition outline-none"
-                placeholder="https://example.com/photo.jpg"
               />
-              <p className="text-xs text-gray-500 mt-2">Untuk saat ini, silakan masukkan URL gambar foto profil Anda.</p>
+
+              {profileImageUrl ? (
+                <p className="text-xs text-gray-500 mt-2">
+                  Foto saat ini: tersedia
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-2">
+                  Anda belum memiliki foto profil.
+                </p>
+              )}
+
+              <p className="text-xs text-gray-500 mt-2">
+                Upload gambar dari perangkat Anda.
+              </p>
             </div>
 
             <div className="pt-4">
