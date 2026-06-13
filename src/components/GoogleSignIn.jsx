@@ -41,6 +41,25 @@ export default function GoogleSignIn() {
             });
     }
 
+    function render() {
+        const container = document.getElementById('google-button-container');
+        const parentWidth = container ? container.offsetWidth : 324;
+
+        window.google.accounts.id.renderButton(
+            document.getElementById('sign-in-with-google'), 
+            { 
+                type: "standard",
+                size: "large", 
+                theme: "outline", 
+                text: "sign_in_with", 
+                shape: "pill",
+                logo_alignment: "center",
+                locale: "id",
+                width: parentWidth
+            }
+        );
+    }
+
     const initializeGoogleSignIn = () => {
         if (window.google) {
             window.google.accounts.id.initialize({
@@ -57,28 +76,9 @@ export default function GoogleSignIn() {
         return () => window.removeEventListener('resize', render);
     }, [300]); 
 
-    const render = () => {
-        const container = document.getElementById('google-button-container');
-        const parentWidth = container ? container.offsetWidth : 324;
-
-        window.google.accounts.id.renderButton(
-            document.getElementById('sign-in-with-google'), 
-            { 
-                type: "standard",
-                size: "large", 
-                theme: "outline", 
-                text: "sign_in_with", 
-                shape: "pill",
-                logo_alignment: "center",
-                locale: "id",
-                width: Math.min(parentWidth, 400) // 3. Inject the dynamic width here
-            }
-        );
-    }
-
     return (
         // default mode popup (data-ux-mode="popup")
-        <div className="flex items-center justify-center py-2.5 md:py-3 lg:py-4 text-base md:text-lg lg:text-2xl" id="google-button-container">
+        <div className="flex items-center justify-center w-full" id="google-button-container">
             <Script src="https://accounts.google.com/gsi/client" 
                     strategy="afterInteractive"
                     onReady={initializeGoogleSignIn}

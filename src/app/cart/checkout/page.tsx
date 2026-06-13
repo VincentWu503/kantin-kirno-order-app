@@ -487,14 +487,4 @@ export default function CartPage() {
 
         </div >
     );
-}e)}
-                location={location}
-                takeaway={takeaway}
-                notes={notes}
-                price={subtotalPrice || 0 + deliveryFee || 0}
-                handleConfirm={handleButtonConfirm}
-            />
-
-        </div >
-    );
 }

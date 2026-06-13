@@ -108,11 +108,17 @@ export default function LoginPage() {
           <Divider className="mt-2 mb-0"></Divider>
 
           <button type="submit" 
-          className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg lg:text-xl 
-          font-serif font-semibold mt-4 md:mt-6 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95">
+          className="w-full py-2.5 md:py-3 lg:py-4 bg-white rounded-full text-base md:text-lg text-black
+          font-semibold mt-4 shadow-sm hover:shadow-md hover:bg-gray-50 transition active:scale-95">
             Sign in
           </button>
-          <span className="text-center text-sm"><p>Atau</p></span>
+          
+          <div className="relative flex py-2 items-center">
+             <div className="flex-grow border-t border-gray-300"></div>
+             <span className="flex-shrink-0 mx-4 text-gray-400 text-xs md:text-sm font-medium">Atau</span>
+             <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+
           <GoogleSignIn/>
         </form>
       </div>

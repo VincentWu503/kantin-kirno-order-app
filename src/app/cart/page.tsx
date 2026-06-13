@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Montserrat, Noto_Sans_Chakma } from "next/font/google";
 import { CartResponseData, MenuData, } from "@/utils/types";
 import { useAuth } from "@/context/AuthContext";
 import { deleteCartItem, updateCartItem, fetchCartItems } from "@/lib/cart";
@@ -11,8 +10,7 @@ import { Delete } from "@mui/icons-material";
 import { ResponseObject } from "@/utils/interfaces";
 import { useRouter } from "next/navigation";
 import { SESSION_STORAGE_EVENT } from "@/utils/constants";
-
-const montserrat = Montserrat({ subsets: ["latin"] });
+import { fetchRestaurantStatus } from "@/lib/restaurant";
 
 function DeleteSuccessModal({ open, handleClose, handleConfirm }: {
     open: boolean,
@@ -284,12 +282,12 @@ export default function CartPage() {
                 <div className="flex justify-center flex-row gap-4">
                     {cart && cart.items.length > 0 && isOpen ? (
                         <Link href="/cart/checkout" className="flex-1">
-                            <button className={`${montserrat.className} w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
+                            <button className={`w-full bg-green-600 text-white py-2 rounded-full text-3xl font-bold hover:bg-green-400 hover:text-white transition`}>
                                 Checkout
                             </button>
                         </Link>
                     ) : ( // button gak bisa click kalo cart kosong atau kantin tutup
-                        <button disabled className={`${montserrat.className} w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
+                        <button disabled className={`w-full bg-gray-400 text-black py-2 rounded-full text-3xl font-bold cursor-not-allowed`}>
                             Checkout
                         </button>
                     )}

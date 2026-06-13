@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
-      <body className="antialiased bg-gray-50 m-0 p-0">
+      <body className="antialiased bg-gray-50 m-0 p-0 font-sans">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
             <ErrorBoundary errorComponent={Error}>
