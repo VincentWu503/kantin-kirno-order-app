@@ -66,7 +66,8 @@ function CartCard({ menu, handleChange, handleDelete }: {
                 <img
                     src={menu.image_url ? menu.image_url : ""}
                     alt={"Image:" + menu.name}
-                    className="w-full h-full object-cover rounded-md"
+                    className="w-full h-full object-cover rounded-md max-h-40"
+                    style={{ height: "160px", objectFit: "cover" }}
                 />
             </div>
 

@@ -100,8 +100,17 @@ export default function EditProfilePage() {
           );
         }
 
-        const uploadData = await uploadResponse.json();
-        updatedProfileImageUrl = uploadData.profile_image_url;
+const uploadData = await uploadResponse.json();
+        const nextUrl = uploadData?.profile_image_url;
+
+        if (typeof nextUrl !== "string" || nextUrl.trim() === "") {
+          throw new Error(
+            uploadData?.message ||
+              "Upload berhasil tetapi URL foto profil tidak didapatkan.",
+          );
+        }
+
+        updatedProfileImageUrl = nextUrl;
       }
 
       const response = await fetch(`${ENV.API_URL}/auth/user/profile`, {
