@@ -46,7 +46,16 @@ export default function Error({
       error.message === CHROME_NETWORK_ERR_MSG || error.message === FIREFOX_NETWORK_ERR_MSG
     ) {
       return "Silakan periksa koneksi Anda dan coba lagi.";
-    } else return error.message;
+    } else {
+      try {
+        const msg = JSON.parse(error.message);
+
+        if (msg.status === 429 && msg.error === "TOO_MANY_REQUEST_ERROR") {
+          return "Anda terlalu banyak membuat permintaan ke server! Silakan coba lagi nanti."
+        }
+      } catch {}
+      return error.message
+    };
   }
 
   function getErrorTitle(): string {
