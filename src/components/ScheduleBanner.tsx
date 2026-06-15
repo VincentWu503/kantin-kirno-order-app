@@ -19,7 +19,7 @@ export default function ScheduleBanner() {
     const hasToken = !!token;
     setIsLoggedIn(hasToken);
 
-    const loadData = async () => {
+    const loadData = async (sessionKey: string) => {
       try {
         const res = await fetchRestaurantData();
         if (res && res.data && res.data.physical_place) {
@@ -28,45 +28,35 @@ export default function ScheduleBanner() {
           const closeStr = physical.close ? physical.close.substring(0, 5) : "15:00";
           const dayClosed = physical.day_closed || [];
 
-          // Peta nama hari dari Inggris ke Indonesia (kalau dari API masih Inggris)
-          const daysMap: { [key: string]: string } = {
-            Monday: "Senin",
-            Tuesday: "Selasa",
-            Wednesday: "Rabu",
-            Thursday: "Kamis",
-            Friday: "Jumat",
-            Saturday: "Sabtu",
-            Sunday: "Minggu",
-            Senin: "Senin",
-            Selasa: "Selasa",
-            Rabu: "Rabu",
-            Kamis: "Kamis",
-            Jumat: "Jumat",
-            Sabtu: "Sabtu",
-            Minggu: "Minggu"
-          };
-
-          const normalizedDayClosed = dayClosed.map((d: string) => daysMap[d] || d);
+          // API mengirim dalam bahasa Inggris
+          const daysEn = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
           const daysIndo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-          const openDays = daysIndo.filter(d => !normalizedDayClosed.includes(d));
+
+          // Cari hari apa saja yang BUKA dalam bahasa Inggris
+          const openDaysEn = daysEn.filter(d => !dayClosed.includes(d));
 
           let dayRange = "";
-          if (openDays.length === 0) {
+          if (openDaysEn.length === 0) {
             dayRange = "Tidak ada jadwal buka";
           } else {
-            let from = openDays[0];
-            let to = openDays[openDays.length - 1];
-            for (let i = 0; i < openDays.length - 1; i++) {
-              const currIdx = daysIndo.indexOf(openDays[i]);
-              const nextIdx = daysIndo.indexOf(openDays[i + 1]);
+            let fromEn = openDaysEn[0];
+            let toEn = openDaysEn[openDaysEn.length - 1];
+
+            // Cek urutan hari buka (mengikuti logika halaman Admin)
+            for (let i = 0; i < openDaysEn.length - 1; i++) {
+              const currIdx = daysEn.indexOf(openDaysEn[i]);
+              const nextIdx = daysEn.indexOf(openDaysEn[i + 1]);
               if (nextIdx !== currIdx + 1) {
-                to = openDays[i];
-                from = openDays[i + 1];
+                toEn = openDaysEn[i];
+                fromEn = openDaysEn[i + 1];
                 break;
               }
             }
-            const fromIndo = daysIndo[daysIndo.indexOf(from)];
-            const toIndo = daysIndo[daysIndo.indexOf(to)];
+
+            // Terjemahkan hari From dan To ke bahasa Indonesia
+            const fromIndo = daysIndo[daysEn.indexOf(fromEn)];
+            const toIndo = daysIndo[daysEn.indexOf(toEn)];
+
             if (fromIndo === toIndo) {
               dayRange = fromIndo;
             } else {
@@ -83,24 +73,26 @@ export default function ScheduleBanner() {
       } finally {
         setLoading(false);
         setIsVisible(true);
-        sessionStorage.setItem("hasSeenSchedule", "true");
+        // Simpan state banner untuk spesifik user ini
+        sessionStorage.setItem(sessionKey, "true");
         timer = setTimeout(() => {
           setIsVisible(false);
         }, 5000);
       }
     };
 
-    // Cek apakah user sudah login dan belum melihat banner
     if (hasToken) {
-        const hasSeen = sessionStorage.getItem("hasSeenSchedule");
-        if (!hasSeen) {
-        loadData();
-        } else {
+      // Buat kunci unik berdasarkan token user agar muncul per-akun
+      const sessionKey = `hasSeenBanner_${token.substring(0, 15)}`;
+      const hasSeen = sessionStorage.getItem(sessionKey);
+      
+      if (!hasSeen) {
+        loadData(sessionKey);
+      } else {
         setLoading(false);
-        }
+      }
     } else {
-        // Jika tidak ada user (belum login), set loading false agar tidak nge-block tapi tidak tampil
-        setLoading(false);
+      setLoading(false);
     }
 
     return () => {
@@ -112,13 +104,12 @@ export default function ScheduleBanner() {
     setIsVisible(false);
   };
 
-  // Komponen TIDAK BOLEH dirender jika loading masih true ATAU jika isVisible false (karena hasSeenSchedule sudah ada atau timer habis)
   if (!isClient || loading || !isVisible || !isLoggedIn) {
     return null;
   }
 
   return (
-    <div className="fixed top-0 left-0 w-full z-[999] bg-yellow-50 text-yellow-800 border-b border-yellow-200 px-4 py-3 shadow-md flex justify-between items-center transition-all duration-300">
+    <div className="fixed top-0 left-0 w-full z-[9999] bg-yellow-50 text-yellow-800 border-b border-yellow-200 px-4 py-3 shadow-md flex justify-between items-center transition-all duration-300">
       <div className="flex-1 text-center text-sm sm:text-base font-medium">
         <p>{scheduleText}</p>
       </div>
