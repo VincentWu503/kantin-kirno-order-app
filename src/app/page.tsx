@@ -13,7 +13,7 @@ import { SESSION_STORAGE_EVENT } from "@/utils/constants";
 
 function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) => void }) {
   return <div className="bg-white flex flex-col justify-between mb-2 md:mb-3 p-3 shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 rounded-xl md:rounded-2xl h-full">
-    <div>
+    <div className="flex flex-col flex-1">
       <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
         {menu.image_url ? (
           <img src={menu.image_url} alt={menu.name} className="w-full h-full object-cover absolute inset-0 transition-transform duration-300 hover:scale-105" />
@@ -24,14 +24,14 @@ function MenuCard({ menu, handle }: { menu: MenuData, handle: (menu: MenuData) =
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5 mb-3 px-1">
+      <div className="flex flex-col flex-1 gap-1.5 mb-3 px-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-sm md:text-base font-bold text-gray-800 line-clamp-2 leading-tight">
             {menu.name}
           </h3>
         </div>
         
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-auto">
           <p className="text-sm md:text-base font-bold text-blue-600">
             {formatIDR(menu.price)}
           </p>
