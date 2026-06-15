@@ -13,3 +13,12 @@ export async function fetchRestaurantStatus(): Promise<{ status: boolean }> {
     return { status: false };
 
 }
+
+export async function fetchRestaurantData(): Promise<any> {
+    try {
+        const data = await fetchWrapper("/restaurant");
+        return data;
+    } catch (e) {
+        return null;
+    }
+}

@@ -1,41 +1,96 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchRestaurantData } from "@/lib/restaurant";
+import { useAuth } from "@/context/AuthContext";
 
-interface ScheduleBannerProps {
-  scheduleText?: string;
-}
-
-export default function ScheduleBanner({ 
-  scheduleText = "Jadwal Buka: Senin - Jumat (08:00 - 16:00)" 
-}: ScheduleBannerProps) {
+export default function ScheduleBanner() {
+  const [scheduleText, setScheduleText] = useState("");
+  const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { user } = useAuth(); // Ambil status user dari AuthContext
 
   useEffect(() => {
-    // Menghindari error hydration di Next.js
     setIsClient(true);
-    
-    const hasSeen = sessionStorage.getItem("hasSeenSchedule");
+    let timer: NodeJS.Timeout;
 
-    if (!hasSeen) {
-      setIsVisible(true);
-      sessionStorage.setItem("hasSeenSchedule", "true");
+    const loadData = async () => {
+      try {
+        const res = await fetchRestaurantData();
+        if (res && res.data && res.data.physical_place) {
+          const physical = res.data.physical_place;
+          const openStr = physical.open ? physical.open.substring(0, 5) : "08:00";
+          const closeStr = physical.close ? physical.close.substring(0, 5) : "15:00";
+          const dayClosed = physical.day_closed || [];
 
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, 5000);
+          const daysIndo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+          const openDays = daysIndo.filter(d => !dayClosed.includes(d));
 
-      // Membersihkan timeout jika komponen unmount
-      return () => clearTimeout(timer);
+          let dayRange = "";
+          if (openDays.length === 0) {
+            dayRange = "Tidak ada jadwal buka";
+          } else {
+            let from = openDays[0];
+            let to = openDays[openDays.length - 1];
+            for (let i = 0; i < openDays.length - 1; i++) {
+              const currIdx = daysIndo.indexOf(openDays[i]);
+              const nextIdx = daysIndo.indexOf(openDays[i + 1]);
+              if (nextIdx !== currIdx + 1) {
+                to = openDays[i];
+                from = openDays[i + 1];
+                break;
+              }
+            }
+            const fromIndo = daysIndo[daysIndo.indexOf(from)];
+            const toIndo = daysIndo[daysIndo.indexOf(to)];
+            if (fromIndo === toIndo) {
+              dayRange = fromIndo;
+            } else {
+              dayRange = `${fromIndo} - ${toIndo}`;
+            }
+          }
+
+          setScheduleText(`Jadwal Buka: ${dayRange} (${openStr} - ${closeStr})`);
+        } else {
+          setScheduleText("Jadwal Buka: Senin - Sabtu (08:00 - 17:00)");
+        }
+      } catch (err) {
+        setScheduleText("Jadwal Buka: Senin - Sabtu (08:00 - 17:00)");
+      } finally {
+        setLoading(false);
+        setIsVisible(true);
+        sessionStorage.setItem("hasSeenSchedule", "true");
+        timer = setTimeout(() => {
+          setIsVisible(false);
+        }, 5000);
+      }
+    };
+
+    // Cek apakah user sudah login dan belum melihat banner
+    if (user) {
+        const hasSeen = sessionStorage.getItem("hasSeenSchedule");
+        if (!hasSeen) {
+        loadData();
+        } else {
+        setLoading(false);
+        }
+    } else {
+        // Jika tidak ada user (belum login), set loading false agar tidak nge-block tapi tidak tampil
+        setLoading(false);
     }
-  }, []);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [user]);
 
   const handleClose = () => {
     setIsVisible(false);
   };
 
-  if (!isClient || !isVisible) {
+  // Komponen TIDAK BOLEH dirender jika loading masih true ATAU jika isVisible false (karena hasSeenSchedule sudah ada atau timer habis)
+  if (!isClient || loading || !isVisible || !user) {
     return null;
   }
 

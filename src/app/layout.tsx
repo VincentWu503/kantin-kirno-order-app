@@ -18,6 +18,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "@/theme";
 import BottomSnackbar from "@/components/BottomSnackbar";
+import ScheduleBanner from "@/components/ScheduleBanner";
 import { AlertColor } from "@mui/material";
 import { useSnackbarMessage } from "@/hooks/useSnackbarMessage";
 
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProvider theme={theme}>
             <ErrorBoundary errorComponent={Error}>
               <AuthProvider>
+                <ScheduleBanner />
                 <LayoutContent>
                   {children}
                   <BottomSnackbar
