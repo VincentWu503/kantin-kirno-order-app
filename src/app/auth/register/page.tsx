@@ -334,9 +334,6 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
-            {errorMessage && <span className="text-xs md:text-sm lg:text-base font-medium text-red-500">{errorMessage}</span>}
-
             <p className="text-xs md:text-sm text-gray-500">
               Kode OTP telah dikirim ke <span className="font-semibold">{email}</span>
             </p>
