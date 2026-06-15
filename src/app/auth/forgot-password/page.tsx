@@ -290,7 +290,7 @@ export default function ForgotPasswordPage() {
                   type="password" 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimal 8 karakter"
+                  placeholder="Minimal 12 karakter"
                   className="w-full p-2 md:p-3 lg:p-4 text-sm md:text-base bg-white rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" 
                   required
                 />
