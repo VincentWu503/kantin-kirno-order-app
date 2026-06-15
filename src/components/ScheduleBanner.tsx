@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { fetchRestaurantData } from "@/lib/restaurant";
-import { useAuth } from "@/context/AuthContext";
 
 export default function ScheduleBanner() {
   const [scheduleText, setScheduleText] = useState("");
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const { user } = useAuth(); // Ambil status user dari AuthContext
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     let timer: NodeJS.Timeout;
+
+    // Intip localStorage untuk cek token login
+    const token = localStorage.getItem("token");
+    const hasToken = !!token;
+    setIsLoggedIn(hasToken);
 
     const loadData = async () => {
       try {
@@ -24,8 +28,27 @@ export default function ScheduleBanner() {
           const closeStr = physical.close ? physical.close.substring(0, 5) : "15:00";
           const dayClosed = physical.day_closed || [];
 
+          // Peta nama hari dari Inggris ke Indonesia (kalau dari API masih Inggris)
+          const daysMap: { [key: string]: string } = {
+            Monday: "Senin",
+            Tuesday: "Selasa",
+            Wednesday: "Rabu",
+            Thursday: "Kamis",
+            Friday: "Jumat",
+            Saturday: "Sabtu",
+            Sunday: "Minggu",
+            Senin: "Senin",
+            Selasa: "Selasa",
+            Rabu: "Rabu",
+            Kamis: "Kamis",
+            Jumat: "Jumat",
+            Sabtu: "Sabtu",
+            Minggu: "Minggu"
+          };
+
+          const normalizedDayClosed = dayClosed.map((d: string) => daysMap[d] || d);
           const daysIndo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
-          const openDays = daysIndo.filter(d => !dayClosed.includes(d));
+          const openDays = daysIndo.filter(d => !normalizedDayClosed.includes(d));
 
           let dayRange = "";
           if (openDays.length === 0) {
@@ -68,7 +91,7 @@ export default function ScheduleBanner() {
     };
 
     // Cek apakah user sudah login dan belum melihat banner
-    if (user) {
+    if (hasToken) {
         const hasSeen = sessionStorage.getItem("hasSeenSchedule");
         if (!hasSeen) {
         loadData();
@@ -83,14 +106,14 @@ export default function ScheduleBanner() {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [user]);
+  }, []);
 
   const handleClose = () => {
     setIsVisible(false);
   };
 
   // Komponen TIDAK BOLEH dirender jika loading masih true ATAU jika isVisible false (karena hasSeenSchedule sudah ada atau timer habis)
-  if (!isClient || loading || !isVisible || !user) {
+  if (!isClient || loading || !isVisible || !isLoggedIn) {
     return null;
   }
 

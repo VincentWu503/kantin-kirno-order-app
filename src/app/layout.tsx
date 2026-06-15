@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { AuthProvider } from "../context/AuthContext";
